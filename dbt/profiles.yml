@@ -1,4 +1,4 @@
-tasty_bytes:
+budget:
   target: dev
   outputs:
     dev:
@@ -6,16 +6,16 @@ tasty_bytes:
       account: 'not needed'
       user: 'not needed'
       role: accountadmin
-      database: tasty_bytes_dbt_db
+      database: budget_dbt_db
       schema: dev
-      warehouse: tasty_bytes_dbt_wh
+      warehouse: budget_dbt_wh
       threads: 8
     prod:
       type: snowflake
       account: 'not needed'
       user: 'not needed'
       role: accountadmin
-      database: tasty_bytes_dbt_db
+      database: budget_dbt_db
       schema: prod
-      warehouse: tasty_bytes_dbt_wh
+      warehouse: budget_dbt_wh
       threads: 8

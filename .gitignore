@@ -1,4 +1,4 @@
-tasty_bytes_dbt_demo/target/
-tasty_bytes_dbt_demo/dbt_packages/
-tasty_bytes_dbt_demo/logs/
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
 .vscode/settings.json

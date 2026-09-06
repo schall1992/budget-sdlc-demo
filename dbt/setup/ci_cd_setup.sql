@@ -8,30 +8,31 @@
 -- Create dev and prod databases and schemas
 -- Choose one of the following three options:
 --
--- NOTE: If you have already run tasty_bytes_setup.sql, your database and schemas
--- already exist. See the getting-started tutorial for details:
--- https://docs.snowflake.com/en/user-guide/tutorials/dbt-projects-on-snowflake-getting-started-tutorial#run-the-sql-commands-in-tasty-bytes-setup-sql-to-set-up-source-data
+-- NOTE: If you have already run budget_setup.sql, your database and schemas
+-- already exist. See the getting-started tutorial this project is adapted from
+-- for background on the overall approach:
+-- https://docs.snowflake.com/en/user-guide/tutorials/dbt-projects-on-snowflake-getting-started-tutorial
 -- =============================================================================
 
 -- Option 1: Create an empty database with dev and prod schemas
 -- This is the simplest approach when you're starting from scratch.
-CREATE DATABASE IF NOT EXISTS tasty_bytes_dbt_db;
-CREATE SCHEMA IF NOT EXISTS tasty_bytes_dbt_db.dev;
-CREATE SCHEMA IF NOT EXISTS tasty_bytes_dbt_db.prod;
+CREATE DATABASE IF NOT EXISTS budget_dbt_db;
+CREATE SCHEMA IF NOT EXISTS budget_dbt_db.dev;
+CREATE SCHEMA IF NOT EXISTS budget_dbt_db.prod;
 
 -- Option 2: Clone your production database
 -- Use Snowflake's zero-copy cloning to create a full replica of your production database.
 -- This gives you a high-fidelity testing environment and is cost-effective because you
 -- only pay storage for tables that change during dbt runs.
--- CREATE DATABASE IF NOT EXISTS tasty_bytes_dbt_db CLONE other_tasty_bytes_dbt_db;
+-- CREATE DATABASE IF NOT EXISTS budget_dbt_db CLONE other_budget_dbt_db;
 
 -- Option 3: Create an empty dev database and clone the production schemas you need
 -- Use this method when you only need specific schemas for testing.
--- CREATE DATABASE IF NOT EXISTS tasty_bytes_dbt_db;
+-- CREATE DATABASE IF NOT EXISTS budget_dbt_db;
 
 -- Repeat the line below for other necessary schemas
--- CREATE SCHEMA IF NOT EXISTS tasty_bytes_dbt_db.dev CLONE other_tasty_bytes_dbt_db.dev;
--- CREATE SCHEMA IF NOT EXISTS tasty_bytes_dbt_db.prod CLONE other_tasty_bytes_dbt_db.prod;
+-- CREATE SCHEMA IF NOT EXISTS budget_dbt_db.dev CLONE other_budget_dbt_db.dev;
+-- CREATE SCHEMA IF NOT EXISTS budget_dbt_db.prod CLONE other_budget_dbt_db.prod;
 
 -- =============================================================================
 -- STEP 2: Create a GitHub service user in Snowflake (recommended)
@@ -55,7 +56,7 @@ CREATE USER IF NOT EXISTS github_actions_service_user
 GRANT ROLE ACCOUNTADMIN TO USER github_actions_service_user;
 
 -- Set a default warehouse:
-ALTER USER github_actions_service_user SET DEFAULT_WAREHOUSE = 'tasty_bytes_dbt_wh';
+ALTER USER github_actions_service_user SET DEFAULT_WAREHOUSE = 'budget_dbt_wh';
 
 -- Alternative: PAT-based authentication (less secure)
 -- If you prefer to use one Snowflake user across multiple repositories, or cannot use
@@ -86,7 +87,7 @@ ALTER USER github_actions_service_user SET DEFAULT_WAREHOUSE = 'tasty_bytes_dbt_
 -- ALTER USER github_actions_service_user SET AUTHENTICATION POLICY github_actions_access_management.POLICIES.github_auth_policy;
 
 -- Set a default warehouse:
--- ALTER USER github_actions_service_user SET DEFAULT_WAREHOUSE = 'tasty_bytes_dbt_wh';
+-- ALTER USER github_actions_service_user SET DEFAULT_WAREHOUSE = 'budget_dbt_wh';
 
 -- =============================================================================
 -- STEP 3: (Optional) Set up a network policy for GitHub Actions
