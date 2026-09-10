@@ -3,6 +3,79 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-10 — Build
+
+- **Prompt:** Start Build — execute T1 through T9, including terraform apply.
+- **Response:** Executed all 9 tasks. Wrote `infra/objects.tf` (9 resources),
+  added `default_warehouse` to `service_user.tf`. Authenticated Terraform
+  locally using the same temp-key-on-SHALL approach as the previous build
+  (generated temp RSA key pair, set on SHALL, ran plan/apply, unset key,
+  deleted key files). Plan showed 9 to add + 1 to change + 0 to destroy;
+  apply succeeded. Verified all objects exist via SQL. Updated
+  `profiles.yml` (dev→PRE_PROD_DB, prod→PROD_DB, warehouse→analysis_wh),
+  `dbt_project.yml` (staging→bronze, marts→gold). Added superseded comments
+  to `budget_setup.sql` and `ci_cd_setup.sql`. Updated both KB observations
+  and their index. All "done when" criteria from the spec are met.
+- **Files touched:** `infra/objects.tf` (created), `infra/service_user.tf`
+  (edited), `infra/terraform.tfstate` (updated by apply),
+  `dbt/profiles.yml` (edited), `dbt/dbt_project.yml` (edited),
+  `dbt/setup/budget_setup.sql` (edited), `dbt/setup/ci_cd_setup.sql`
+  (edited), `kb/observations/snowflake-account-baseline.md` (edited),
+  `kb/observations/dbt-scaffold-drift.md` (edited),
+  `kb/observations/index.md` (edited), `kb/log.md` (edited), `log.md`
+  (edited).
+
+## 2026-09-10 — Plan
+
+- **Prompt:** High-level plan approved; write the breakdown.
+- **Response:** Wrote `docs/init-snowflake-objects-plan.md` with 9 tasks:
+  T1 write `objects.tf`, T2 update `service_user.tf`, T3 plan, T4 apply,
+  T5 update `profiles.yml`, T6 update `dbt_project.yml`, T7 superseded
+  comments on setup SQL, T8 update account-baseline observation, T9 update
+  scaffold-drift observation. Presented for approval.
+- **Files touched:** `docs/init-snowflake-objects-plan.md` (created),
+  `log.md` (edited).
+
+## 2026-09-10 — Spec
+
+- **Prompt:** Rename warehouse from `BUDGET_DBT_WH` to `ANALYSIS_WH` in the
+  spec; no other changes.
+- **Response:** Updated all 4 references in
+  `docs/init-snowflake-objects-spec.md` (object table, TF resource name,
+  default_warehouse section, profiles.yml note). Re-presented for approval.
+- **Files touched:** `docs/init-snowflake-objects-spec.md` (edited),
+  `log.md` (edited).
+
+## 2026-09-10 — Spec
+
+- **Prompt:** Write and present the spec for `init-snowflake-objects`.
+- **Response:** Wrote `docs/init-snowflake-objects-spec.md` covering: TF
+  resources for `BUDGET_DBT_WH`, `PRE_PROD_DB` (bronze/silver/gold),
+  `PROD_DB` (bronze/silver/gold); `dbt/profiles.yml` and `dbt_project.yml`
+  updates to target the new databases/schemas; reconciliation of
+  `budget_setup.sql`, `ci_cd_setup.sql`, and two KB observations that
+  contradict the new object model. Presented for approval.
+- **Files touched:** `docs/init-snowflake-objects-spec.md` (created),
+  `log.md` (edited).
+
+## 2026-09-10 — Discovery
+
+- **Prompt:** Start building environment config and Snowflake objects infra.
+  Branch: `init-snowflake-objects`. Scope: warehouse + database/schemas as
+  Terraform resources. User directed a medallion architecture replacing the
+  old `budget_dbt_db` design: `PRE_PROD_DB` and `PROD_DB`, each with
+  `bronze`, `silver`, `gold` schemas.
+- **Response:** Created branch `init-snowflake-objects` off `main`. Verified
+  live account state (no `budget_dbt_wh`, no `budget_dbt_db`). Researched
+  TF provider docs for `snowflake_warehouse`, `snowflake_database`,
+  `snowflake_schema` — all stable in ~2.20. Flagged contradictions with
+  `budget_setup.sql`, `ci_cd_setup.sql`, `profiles.yml`,
+  `dbt-scaffold-drift.md`, and `snowflake-account-baseline.md`. Resolved
+  the `budget_dbt_db.raw` vs `SOURCE_DB` question (no raw schema in new
+  model). User included `profiles.yml`/`dbt_project.yml` updates in scope.
+  Discovery closed.
+- **Files touched:** `log.md` (edited).
+
 ## 2026-09-10 — Spec
 
 - **Prompt:** Insisted the service user be created right now via Cortex,

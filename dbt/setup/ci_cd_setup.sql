@@ -1,4 +1,10 @@
 -- =============================================================================
+-- NOTE: Step 1 references budget_dbt_db, which no longer exists in the project's
+-- object model. Database/schema creation is now managed by Terraform
+-- (infra/objects.tf): PRE_PROD_DB and PROD_DB with bronze/silver/gold schemas.
+-- =============================================================================
+
+-- =============================================================================
 -- CI/CD Setup for dbt Projects on Snowflake
 -- Source: https://docs.snowflake.com/en/user-guide/tutorials/dbt-projects-on-snowflake-ci-cd-tutorial
 -- =============================================================================

@@ -4,6 +4,18 @@ Newest entry first. Records additions and meaningful changes to concepts in
 this bundle. Distinct from the repo-root `log.md`, which logs the SDLC
 process itself.
 
+## 2026-09-10 (3)
+
+- Updated `observations/snowflake-account-baseline.md` — project objects now
+  exist after `init-snowflake-objects` terraform apply: ANALYSIS_WH,
+  PRE_PROD_DB (bronze/silver/gold), PROD_DB (bronze/silver/gold), service
+  user default_warehouse set to ANALYSIS_WH. Rewrote "What exists" and
+  "What does not exist" sections to reflect the live account state.
+- Updated `observations/dbt-scaffold-drift.md` — marked the
+  `budget_dbt_db.raw` vs `SOURCE_DB` contradiction as resolved: no raw
+  schema in the new medallion model, SOURCE_DB is the sole source.
+- Updated `observations/index.md` to reflect both changes.
+
 ## 2026-09-10 (2)
 
 - Added `observations/github-actions-service-user-bootstrap.md` — user
