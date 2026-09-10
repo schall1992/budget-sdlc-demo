@@ -3,6 +3,18 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-10 — Pull request
+
+- **Prompt:** Open the PR for init-snowflake-objects against main.
+- **Response:** Committed all 15 changed files (including new
+  `infra/objects.tf`, spec, plan, updated dbt config, setup SQL comments,
+  KB observations, terraform state). Added `terraform.tfstate.backup` to
+  `.gitignore`. Pushed to `origin/init-snowflake-objects` and opened PR #2
+  with a summary of what changed and a test plan. Note on merge: terraform
+  apply will fire but should be a no-op since objects already exist.
+- **Files touched:** `.gitignore` (edited), `log.md` (edited). PR #2
+  opened at https://github.com/schall1992/budget-sdlc-demo/pull/2.
+
 ## 2026-09-10 — Build
 
 - **Prompt:** Start Build — execute T1 through T9, including terraform apply.
