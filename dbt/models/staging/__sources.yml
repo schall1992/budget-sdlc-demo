@@ -1,7 +1,7 @@
 version: 2
 sources:
   - name: raw
-    database: SOURCE
+    database: SOURCE_DB
     schema: RAW
     tables:
       - name: transactions

@@ -10,6 +10,49 @@ permissions:
   id-token: write
 
 jobs:
+  changes:
+    name: "Detect changed paths"
+    runs-on: ubuntu-latest
+    outputs:
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            infra:
+              - 'infra/**'
+
+  terraform-plan:
+    name: "Terraform Plan"
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    environment: prod # Must match the key-pair auth's associated environment
+    env:
+      SNOWFLAKE_ORGANIZATION_NAME: epgqqsk
+      SNOWFLAKE_ACCOUNT_NAME: kn46620
+      SNOWFLAKE_USER: GITHUB_ACTIONS_SERVICE_USER
+      SNOWFLAKE_AUTHENTICATOR: SNOWFLAKE_JWT
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_RAW }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.16"
+
+      - name: Terraform init
+        working-directory: infra
+        run: terraform init
+
+      - name: Terraform plan
+        working-directory: infra
+        run: terraform plan -no-color
+
   run-snowflake-test-dbt-job:
     name: "Run on Incoming PR"
     runs-on: ubuntu-latest

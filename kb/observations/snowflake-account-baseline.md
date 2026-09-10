@@ -54,7 +54,6 @@ successfully against this account:
 - Warehouse `budget_dbt_wh`
 - Database `budget_dbt_db` and its `dev` / `prod` / `integrations` / `raw` schemas
 - Any API integration (so no GitHub/Snowsight workspace link)
-- User `github_actions_service_user`
 - Network policy `github_actions_policy`
 - Tasks `run_budget_subset` / `run_budget_full` (the only task in the account
   is the system task `CORTEX_BASE_MODELS_REFRESH_TASK`)
@@ -66,4 +65,6 @@ Practical consequence: both GitHub Actions workflows would fail today, and
 prerequisite for any modeling work.
 
 See [dbt-scaffold-drift.md](dbt-scaffold-drift.md) for the repo-side reasons
-the scripts cannot simply be run as written.
+the scripts cannot simply be run as written. See
+[github-actions-service-user-bootstrap.md](github-actions-service-user-bootstrap.md)
+for the one user created out of band since this baseline was taken.

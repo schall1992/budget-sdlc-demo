@@ -9,3 +9,7 @@ would otherwise have to rediscover.
 - [dbt-scaffold-drift.md](dbt-scaffold-drift.md) — template placeholders,
   stale tasty-bytes references, and the unresolved question of where raw data
   lives.
+- [github-actions-service-user-bootstrap.md](github-actions-service-user-bootstrap.md)
+  — `github_actions_service_user` was hand-created via Cortex ahead of
+  Terraform, with both OIDC and key-pair auth; Terraform will need to
+  `import` it rather than create it.
