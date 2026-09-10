@@ -2,3 +2,5 @@ dbt/target/
 dbt/dbt_packages/
 dbt/logs/
 .vscode/settings.json
+
+infra/.terraform/

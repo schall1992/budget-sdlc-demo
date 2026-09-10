@@ -4,6 +4,20 @@ Newest entry first. Records additions and meaningful changes to concepts in
 this bundle. Distinct from the repo-root `log.md`, which logs the SDLC
 process itself.
 
+## 2026-09-10 (2)
+
+- Added `observations/github-actions-service-user-bootstrap.md` — user
+  requested `github_actions_service_user` be hand-created via Cortex right
+  now, ahead of `infra/` Terraform code, despite the spec's bootstrap flow
+  being designed to avoid exactly that. Created with `DEFAULT_ROLE =
+  ACCOUNTADMIN`, OIDC workload identity, and an RSA key pair. Terraform will
+  need to `import` it later. Edited `observations/snowflake-account-baseline.md`
+  to remove the now-stale "does not exist" line for this user and link to
+  the new observation. Later same day: installed and authenticated `gh`,
+  created the previously-nonexistent `prod` GitHub environment, and stored
+  the private key there as `SNOWFLAKE_PRIVATE_KEY_RAW`; updated the
+  observation to record where the key lives.
+
 ## 2026-09-10
 
 - Added `observations/snowflake-account-baseline.md` — live read-only probe of
