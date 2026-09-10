@@ -45,6 +45,13 @@ jobs:
         with:
           terraform_version: "~1.16"
 
+      - name: Debug private key shape (no content printed)
+        run: |
+          echo "byte length: $(printf '%s' "$SNOWFLAKE_PRIVATE_KEY" | wc -c)"
+          echo "line count: $(printf '%s' "$SNOWFLAKE_PRIVATE_KEY" | wc -l)"
+          echo "BEGIN markers: $(printf '%s' "$SNOWFLAKE_PRIVATE_KEY" | grep -c 'BEGIN')"
+          echo "END markers: $(printf '%s' "$SNOWFLAKE_PRIVATE_KEY" | grep -c 'END')"
+
       - name: Terraform init
         working-directory: infra
         run: terraform init
