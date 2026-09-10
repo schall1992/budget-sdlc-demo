@@ -9,8 +9,11 @@ semantic layer, and app.
 
 ## Contents
 
+- [observations/](observations/) — durable facts about the environment and
+  codebase
 - [projects/](projects/) — project rollups (auto-generated, see `refs.yaml`)
+- [log.md](log.md) — history of concept additions and changes
 
 No other entity folders yet — they'll be added as content is landed
-(`sources/`, `signals/`, `observations/`, `decisions/`, `action-items/`,
-`evidence/`, `stakeholders/`).
+(`sources/`, `signals/`, `decisions/`, `action-items/`, `evidence/`,
+`stakeholders/`).

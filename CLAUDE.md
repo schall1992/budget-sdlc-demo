@@ -3,15 +3,10 @@
 Demo of AI SDLC practices, built around budget data: a budget data model, a
 semantic layer, and an app on top of it.
 
-This KB root is also a working code repo — application/model/semantic-layer
-code lives alongside the standard `kb/`/`refs.yaml`/`index.md` OKF scaffold
-rather than in a separate location. `kb/` still follows the standard OKF
-format described in the harness root `CLAUDE.md` — only the code sits beside
-it, not inside it. Specs and plans are **not** OKF concepts: they live in
-`docs/` at this repo's root, outside the bundle.
-
-Nothing else client/engagement-specific has been captured yet — fill in as
-it comes up (data sources, stakeholders, project scope).
+This KB root is also a working code repo. `kb/` follows the standard OKF
+format described in the harness root `CLAUDE.md`; the code sits beside it,
+not inside it. Specs and plans are **not** OKF concepts — they live in
+`docs/`, outside the bundle. See `index.md` for the repo layout.
 
 ## Content discipline
 
@@ -32,6 +27,36 @@ it comes up (data sources, stakeholders, project scope).
 - When instructions extend or build on existing information, confirm how the
   new part relates to the original before writing, so the result stays one
   succinct statement instead of sprawl.
+
+## Durable memory: `kb/`
+
+`kb/` is this repo's long-term memory across sessions. Anything learned that
+took real effort to find out, and that a future session would otherwise have
+to rediscover, gets written there as an OKF concept (format per the harness
+root `CLAUDE.md`). Write it when you learn it, not at the end of the session.
+
+What goes where:
+
+- **Live environment facts** — what actually exists in Snowflake, which
+  connection works, the real shape of a source table → `kb/observations/`
+- **Why something is the way it is** — a choice the user made, and the
+  reasoning behind it → `kb/decisions/`
+- **A raw artifact worth keeping verbatim** → `kb/sources/`
+- **People** → `kb/stakeholders/`
+
+Notes:
+
+- `derived_from` is optional for facts learned by inspecting the environment
+  directly rather than from a document — say in the body how it was learned
+  and when.
+- Content discipline above applies here too: one fact in one place, short and
+  plain. Never mirror into `kb/` something the code, a spec, or a plan
+  already states — link to it instead.
+- A contradiction between the KB and what you observe is not yours to
+  reconcile. Record that the two disagree and raise it, per content
+  discipline.
+- Update the `index.md` of any folder touched, and prepend to `kb/log.md` —
+  the bundle's own log of concept changes, distinct from the SDLC `log.md`.
 
 ## SDLC workflow
 
