@@ -18,19 +18,19 @@ single commit (`ee81c6b`). The rename landed, but several template values did
 not, so the scripts cannot be executed as written. Found by reading the files
 on 2026-09-10; **none of this has been fixed or decided yet.**
 
-## Contradiction: the declared source does not exist
+## Contradiction: the declared source does not exist — RESOLVED
 
-`dbt/models/staging/__sources.yml` declares `database: SOURCE`, schema `RAW`,
-table `TRANSACTIONS`. There is no `SOURCE` database in the account — the real
-table is `SOURCE_DB.RAW.TRANSACTIONS` (see
-[snowflake-account-baseline.md](snowflake-account-baseline.md)).
+`dbt/models/staging/__sources.yml` originally declared `database: SOURCE`,
+which didn't exist. This was fixed in the `init-snowflake-infra` spec to
+point at `SOURCE_DB.RAW.TRANSACTIONS`.
 
-Separately, `dbt/setup/budget_setup.sql` creates a `budget_dbt_db.raw` schema
-"for the budget foundational source data, once loaded" and leaves a Step 6
-TODO to load it. So the repo currently implies two different homes for raw
-data — an external `SOURCE`/`SOURCE_DB`, and a project-owned
-`budget_dbt_db.raw`. Which is authoritative is an open question for the user;
-do not pick one silently.
+Separately, `dbt/setup/budget_setup.sql` created a `budget_dbt_db.raw`
+schema "for the budget foundational source data, once loaded," implying two
+homes for raw data. **Resolved 2026-09-10:** the `init-snowflake-objects`
+spec replaced the entire `budget_dbt_db` design with a medallion
+architecture (`PRE_PROD_DB`/`PROD_DB`, each with `bronze`/`silver`/`gold`
+schemas). No `raw` schema exists in the new model.
+`SOURCE_DB.RAW.TRANSACTIONS` is the sole authoritative source.
 
 ## Blockers that stop the scripts running
 

@@ -6,16 +6,16 @@ budget:
       account: 'not needed'
       user: 'not needed'
       role: accountadmin
-      database: budget_dbt_db
-      schema: dev
-      warehouse: budget_dbt_wh
+      database: PRE_PROD_DB
+      schema: bronze
+      warehouse: analysis_wh
       threads: 8
     prod:
       type: snowflake
       account: 'not needed'
       user: 'not needed'
       role: accountadmin
-      database: budget_dbt_db
-      schema: prod
-      warehouse: budget_dbt_wh
+      database: PROD_DB
+      schema: bronze
+      warehouse: analysis_wh
       threads: 8

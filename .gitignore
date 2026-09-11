@@ -4,3 +4,4 @@ dbt/logs/
 .vscode/settings.json
 
 infra/.terraform/
+infra/terraform.tfstate.backup

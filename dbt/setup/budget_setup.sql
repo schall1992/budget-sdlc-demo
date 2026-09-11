@@ -1,4 +1,13 @@
 -- =============================================================================
+-- NOTE: Steps 1-2 (warehouse and database/schema creation) are now superseded
+-- by infra/objects.tf (Terraform). The new object model uses ANALYSIS_WH,
+-- PRE_PROD_DB, and PROD_DB with bronze/silver/gold schemas — not budget_dbt_wh
+-- or budget_dbt_db. Running Steps 1-2 as written would create conflicting
+-- objects. Steps 3+ (observability, API integration, network rules) remain
+-- relevant for future work.
+-- =============================================================================
+
+-- =============================================================================
 -- Budget dbt Project: Environment Setup
 -- Adapted from: https://docs.snowflake.com/en/user-guide/tutorials/dbt-projects-on-snowflake-getting-started-tutorial
 --

@@ -21,5 +21,7 @@ models:
   budget:
     staging:
       +materialized: view
+      +schema: bronze
     marts:
       +materialized: table
+      +schema: gold
