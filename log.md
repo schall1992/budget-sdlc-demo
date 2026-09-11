@@ -3,6 +3,17 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-11 — Pull request
+
+- **Prompt:** PR merged for budget sdlc demo.
+- **Response:** Confirmed PR #2 (`init-snowflake-objects`) merged into
+  `main` at 2026-09-11T08:25:27Z. Pulled `main` locally and moved the
+  `init-snowflake-objects` spec and plan from `docs/` to `docs/prod/` per
+  the shipping gate.
+- **Files touched:** `docs/init-snowflake-objects-spec.md` (moved to
+  `docs/prod/`), `docs/init-snowflake-objects-plan.md` (moved to
+  `docs/prod/`), `log.md` (edited).
+
 ## 2026-09-10 — Pull request
 
 - **Prompt:** Open the PR for init-snowflake-objects against main.
