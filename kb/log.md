@@ -4,6 +4,15 @@ Newest entry first. Records additions and meaningful changes to concepts in
 this bundle. Distinct from the repo-root `log.md`, which logs the SDLC
 process itself.
 
+## 2026-09-14
+
+- Added `observations/repo-and-cicd-baseline.md` — the repo's own current
+  shape (single Terraform root with committed state, `main`-only branching,
+  the two workflows and their two different auth mechanisms, dbt-on-Snowflake
+  execution path). Created because current state was previously described
+  only inside live specs, which are archived to `docs/prod/` on ship.
+- Updated `observations/index.md` to list it.
+
 ## 2026-09-10 (3)
 
 - Updated `observations/snowflake-account-baseline.md` — project objects now

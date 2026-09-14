@@ -10,6 +10,9 @@ would otherwise have to rediscover.
 - [dbt-scaffold-drift.md](dbt-scaffold-drift.md) — template placeholders
   and stale tasty-bytes references. The raw-data-location contradiction is
   resolved (no raw schema; SOURCE_DB is authoritative).
+- [repo-and-cicd-baseline.md](repo-and-cicd-baseline.md) — the repo's own
+  shape: single Terraform root with committed state, `main`-only branching,
+  the two workflows, and the two different CI auth mechanisms.
 - [github-actions-service-user-bootstrap.md](github-actions-service-user-bootstrap.md)
   — `github_actions_service_user` was hand-created via Cortex ahead of
   Terraform, with both OIDC and key-pair auth; imported into Terraform
