@@ -1,7 +1,7 @@
 # Phase: Build
 
-**In:** an approved plan (high-level + breakdown). **Out:** code and tests on
-the feature branch. **Gate:** every breakdown task complete, tests passing.
+States `BUILD_IN_PROGRESS`/`BUILD_COMPLETE` — see [states.md](states.md) for
+the gates in and out of these states.
 
 Developer agents pick up the breakdown's tasks and implement them. Default to
 completing one task fully — including that task's tests — before starting the
@@ -15,5 +15,10 @@ Tests written per task should verify the spec's important functionality only
 plan's breakdown already specified for that task, not decided ad hoc while
 building.
 
-If a requirement turns out to be unclear or wrong mid-build, stop and reopen
-discovery (see `discovery.md`) rather than patching around it.
+Passing tests locally is not what closes out the build. `BUILD_COMPLETE`
+requires the evidence its class calls for — see "How gates differ by class"
+in [classes.md](classes.md) — and that evidence comes from CI, not from the
+agent's own account of its work.
+
+If a requirement turns out to be unclear or wrong mid-build, reopen discovery
+(see `discovery.md`) rather than patching around it.

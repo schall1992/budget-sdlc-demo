@@ -329,14 +329,14 @@ once the HCP migration is verified.
 Silver and gold models, the semantic layer, the app, task scheduling,
 automated `dev` resets, and retiring `GITHUB_ACTIONS_SERVICE_USER`.
 
-## Known follow-up
+## Dependency
 
-`sdlc/classes.md` names `incoming_pr.yml` and `pr_merged.yml` explicitly
-when justifying the `elevated` class. This spec renames both. The fix is to
-rephrase that passage in terms of the mechanism ("CI applies to prod on
-merge with no review step after") rather than filenames, so renames never
-invalidate it again — a `governing`-class edit, tracked separately from this
-change so it does not bump this one's class.
+`sdlc/classes.md` used to name `incoming_pr.yml` and `pr_merged.yml`
+explicitly when justifying the `elevated` class — filenames this spec
+renames. That passage has since been rephrased in terms of the mechanism
+rather than the filenames, so these renames no longer invalidate it. See
+[sdlc-risk-classes-spec.md](sdlc-risk-classes-spec.md), whose work is
+carried on the same branch as this change.
 
 ## Test plan
 

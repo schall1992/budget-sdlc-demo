@@ -3,6 +3,32 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — Governing work committed; gate inversion closed
+
+- **Transition:** `SPEC_DRAFT` created for new slug `sdlc-risk-classes`
+  (retroactively — see the spec's "Known deviation"). No change to
+  `budget-models-and-envs`, still `SPEC_DRAFT`.
+- **Class:** `governing` (`sdlc/**`, `CLAUDE.md`). The branch now spans
+  `governing` and `elevated`, so under the new union rule it owes both
+  sets of gates, including the reviewed `terraform plan`.
+- **Prompt:** asked why the governing work was not being committed.
+- **Response:** no good reason — it began as a valid call to keep
+  `doc-drift-cleanup` trivial, then persisted by inertia after it stopped
+  applying. Two costs found: `sdlc/states.md` and `sdlc/classes.md` were
+  untracked while four committed files already linked to them (dangling
+  links in the onboarding docs), and untracked files have no history to
+  recover. Also found that precedence picked the wrong gate when `elevated`
+  and `governing` mix, since `governing` outranks `elevated` but requires
+  weaker evidence. Fixed by making gates accumulate as a union rather than
+  substitute. Committed the governing work on this branch at the user's
+  direction, wrote its spec, and — the branch already being `governing` —
+  closed the workflow-filename staleness in `classes.md` rather than
+  leaving it as follow-up.
+- **Files touched:** sdlc/classes.md, CLAUDE.md, sdlc/{build,discovery,
+  plan,pull-request,spec}.md, sdlc/states.md,
+  docs/sdlc-risk-classes-spec.md (new),
+  docs/budget-models-and-envs-spec.md (follow-up section → dependency)
+
 ## 2026-09-14 — Spec revised: remote state, two High findings closed
 
 - **Transition:** `SPEC_DRAFT → SPEC_DRAFT` (old draft deleted, new one

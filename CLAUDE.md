@@ -60,26 +60,14 @@ Notes:
 
 ## SDLC workflow
 
-All work — a feature, a fix, a change to the data model or app — moves
-through these phases in order. Read the phase's file in `sdlc/` before
-working it; the table is orientation, the file is the rule.
-
-| Phase | Input | Output | Gate to exit |
-|---|---|---|---|
-| [Discovery](sdlc/discovery.md) | a request | feature branch off `main`; clear intent | no open gaps |
-| [Spec](sdlc/spec.md) | discovery | `docs/<slug>-spec.md` | user approves the spec |
-| [Plan](sdlc/plan.md) | approved spec | `docs/<slug>-plan.md` | user approves high-level, then breakdown |
-| [Build](sdlc/build.md) | approved plan | code + tests on the branch | every task done, tests pass |
-| [Pull request](sdlc/pull-request.md) | completed build | PR against `main` | shipped → spec+plan move to `docs/prod/` |
-
-**Direct changes (bypassing the SDLC).** When the user explicitly asks for a
-direct/quick change with no process — using a phrase like "direct change",
-"skip the SDLC", or "quick fix, no process" — skip discovery/spec/plan/PR
-entirely and commit straight to `main`, no feature branch. This is for early
-repo setup and low-stakes fixes, not a substitute for real feature work; only
-use it when the user says so explicitly, never inferred from the type of
-change. Still log it in `log.md` as its own phase ("Direct"), recording the
-prompt and outcome per the usual log entry fields below.
+Work moves through the states and transitions defined in
+[sdlc/states.md](sdlc/states.md) — that file is the authority on ordering.
+Which of those states a change visits, and which need the user's sign-off,
+depend on its risk class, derived from the paths it touches:
+[sdlc/classes.md](sdlc/classes.md) is the authority on that. Each
+`sdlc/<phase>.md` file describes how to do the work for its state; read the
+relevant one before acting, but look to those two for what's allowed to
+happen next.
 
 **One live file per slug.** A slug (from the Jira ticket or feature name) has
 at most one spec and one plan in `docs/` at any time. Revising either means
@@ -101,8 +89,12 @@ OKF bundle's own log of concept additions/changes, per root `CLAUDE.md`).
 Each entry is one interaction (one user prompt and the response to it) and
 records:
 
-- **Phase** — the SDLC phase active during this interaction (Discovery,
-  Spec, Plan, Build, Pull request).
+- **Transition** — the state change this interaction caused (or attempted),
+  per `sdlc/states.md` (e.g. `SPEC_DRAFT → SPEC_APPROVED`), or "none" if it
+  didn't move the slug's state.
+- **Class** — the slug's risk class per `sdlc/classes.md`, which says which
+  states it skips and which gates applied. Write it as `provisional →
+  effective` when a change was bumped at `PR_OPEN`.
 - **Prompt** — a short paraphrase of what the user asked, not verbatim.
 - **Response** — a short paraphrase of the high-level answer/outcome, not the
   full response text.

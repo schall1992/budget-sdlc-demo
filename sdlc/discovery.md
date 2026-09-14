@@ -1,8 +1,7 @@
 # Phase: Discovery
 
-**In:** a request. **Out:** a feature branch off `main`, and clear intent.
-**Gate:** no open gaps — don't move to spec until the intent of the work is
-actually clear.
+State `DISCOVERY_OPEN` — see [states.md](states.md) for the gate into and
+out of this state.
 
 **Starting from nothing.** When `docs/` holds no spec or plan for live work,
 there is nothing to infer from — so just ask, in plain language, what we're
@@ -26,8 +25,8 @@ questionnaire. Prefer a plain open question over a menu of pre-baked options,
 and don't batch a pile of decisions into one turn — the answer to the first
 usually changes the rest.
 
-**Reopening discovery.** If, while working a later phase, a requirement turns
-out to be unclear or wrong, stop and come back here — don't patch around the
-ambiguity in code or in the existing spec. Once discovery resolves it,
+**Reopening discovery.** Landing back in `DISCOVERY_OPEN` from a later state
+(see states.md) means a requirement turned out unclear or wrong — don't
+patch around the ambiguity in code or in the existing spec. Once resolved,
 replace that slug's spec and plan per "One live file per slug" in the root
 `CLAUDE.md`, and plan afresh from the new spec.
