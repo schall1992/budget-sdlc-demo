@@ -3,6 +3,26 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — T15 first half proven; merge blocked, plan review due
+
+- **Transition:** `BUILD_IN_PROGRESS → PR_OPEN` attempted for
+  `budget-models-and-envs`; halted. PR #4 into `dev` is open and green.
+- **Class:** `elevated` (provisional).
+- **Prompt:** continue.
+- **Response:** opened PR #4 and proved spec test-plan item 6 in substance,
+  not by CI colour: `shared` and `pre_prod` both planned zero-diff from a
+  branch cut off `main` — the specific proof that state is no longer
+  branch-dependent — and `PRE_PROD_DB.BRONZE_PR_4.STG_TRANSACTIONS` holds
+  1,738 rows with no negatives, its schema owned by `PRE_PROD_DBT_ROLE` and
+  the `BUDGET_DBT` object inside it. The `prod` plan shows 13 to add, which is
+  the prod role/user/grants that have deliberately never been applied.
+  Item 9 verified statically: no workflow triggers on a PR into `main`.
+  Merging the PR was denied by the permission classifier; not worked around.
+  This coincides with the `elevated` gate that makes the `terraform plan`
+  review the user's to give, so the prod plan was put to them rather than
+  applied.
+- **Files touched:** none.
+
 ## 2026-09-14 — T13: four workflows written, three files deleted
 
 - **Transition:** none. `budget-models-and-envs` stays `BUILD_IN_PROGRESS`;
