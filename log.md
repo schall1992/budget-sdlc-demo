@@ -3,6 +3,27 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — Spec revised: remote state, two High findings closed
+
+- **Transition:** `SPEC_DRAFT → SPEC_DRAFT` (old draft deleted, new one
+  written). Still awaiting approval.
+- **Class:** `elevated`.
+- **Prompt:** returned to the `budget-models-and-envs` branch to finish the
+  spec.
+- **Response:** flagged that six log entries are stranded on the unmerged
+  `doc-drift-cleanup` branch. Resolved both High findings from the earlier
+  review: state moves out of the repo into HCP Terraform (free tier, one
+  workspace per environment, local execution mode, `TF_API_TOKEN` in the
+  `infra` environment), which also eliminates the commit-state-back step and
+  the force-push rollback footgun — both dropped from the accepted-risk
+  list. The stale `classes.md` filename references are recorded as a
+  `governing` follow-up rather than fixed here, to avoid bumping this
+  change's class. Also dropped the `-state=` flag in favour of
+  `TF_WORKSPACE`, and stated that `PROD_DBT_USER`'s key is never stored
+  locally.
+- **Files touched:** docs/budget-models-and-envs-spec.md (deleted and
+  rewritten)
+
 ## 2026-09-11 — Pull request
 
 - **Prompt:** PR merged for budget sdlc demo.
