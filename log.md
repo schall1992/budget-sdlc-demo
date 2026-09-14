@@ -3,6 +3,30 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — T13: four workflows written, three files deleted
+
+- **Transition:** none. `budget-models-and-envs` stays `BUILD_IN_PROGRESS`;
+  T13 done, T15/T16 remain.
+- **Class:** `elevated` (provisional).
+- **Prompt:** continue.
+- **Response:** wrote `pr_to_dev.yml`, `dev_merged.yml`, `main_merged.yml`,
+  `pr_closed.yml`; deleted `incoming_pr.yml`, `pr_merged.yml` and
+  `dbt/setup/`. All four use key-pair auth via a key written to `RUNNER_TEMP`;
+  the OIDC path is retired, which is what stops the next PR being red for the
+  reason the stage-0 waiver covered. Verified env-var-only `snow` auth against
+  the live account before writing it into CI, rather than assuming the
+  variable names. Both T13 tests pass: no `git push`/`git commit` anywhere in
+  `.github/workflows/`, and actionlint is clean — it caught a real error, the
+  `runner` context being unavailable in job-level `env`. One judgement call
+  beyond the letter of the spec, flagged to the user: `schedules.sql`'s
+  two-task DAG collapsed to one, since with a single model the "subset" task
+  would select exactly what the full build does.
+- **Files touched:** created `.github/workflows/pr_to_dev.yml`,
+  `dev_merged.yml`, `main_merged.yml`, `pr_closed.yml`; edited
+  `dbt/schedules.sql`; deleted `.github/workflows/incoming_pr.yml`,
+  `.github/workflows/pr_merged.yml`, `dbt/setup/budget_setup.sql`,
+  `dbt/setup/ci_cd_setup.sql`.
+
 ## 2026-09-14 — T12 finished: Snowflake key rotated, HCP token kept
 
 - **Transition:** none. `budget-models-and-envs` stays `BUILD_IN_PROGRESS`;

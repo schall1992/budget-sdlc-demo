@@ -1,0 +1,102 @@
+# Merge to `main` is the only thing that touches prod. Nothing runs on the PR
+# into `main` — the preview happened on the PR into `dev`, which plans all
+# three workspaces.
+name: main merged
+run-name: main updated by ${{ github.actor }}
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            infra:
+              - 'infra/**'
+
+  terraform-apply:
+    name: Terraform apply (shared, then prod)
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    environment: infra
+    env:
+      SNOWFLAKE_ORGANIZATION_NAME: epgqqsk
+      SNOWFLAKE_ACCOUNT_NAME: kn46620
+      SNOWFLAKE_USER: GITHUB_ACTIONS_SERVICE_USER
+      SNOWFLAKE_AUTHENTICATOR: SNOWFLAKE_JWT
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_RAW }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.16"
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform init
+        working-directory: infra
+        env:
+          TF_WORKSPACE: budget-shared
+        run: terraform init -input=false
+
+      # Shared first: the warehouse and the CI service user are account-wide,
+      # and the prod target's grants reference the warehouse.
+      - name: Apply shared
+        working-directory: infra
+        env:
+          TF_WORKSPACE: budget-shared
+        run: terraform apply -auto-approve -input=false -no-color -var-file=envs/shared.tfvars
+
+      - name: Apply prod
+        working-directory: infra
+        env:
+          TF_WORKSPACE: budget-prod
+        run: terraform apply -auto-approve -input=false -no-color -var-file=envs/prod.tfvars
+
+  dbt-build:
+    name: dbt build into PROD_DB
+    needs: [changes, terraform-apply]
+    if: ${{ always() && (needs.terraform-apply.result == 'success' || needs.terraform-apply.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    # The prod environment is restricted to `main`, so this is the only job in
+    # the repo that can be handed PROD_DBT_PRIVATE_KEY.
+    environment: prod
+    env:
+      SNOWFLAKE_CLI_FEATURES_ENABLE_DBT: true
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: PROD_DBT_USER
+      SNOWFLAKE_ROLE: PROD_DBT_ROLE
+      SNOWFLAKE_WAREHOUSE: ANALYSIS_WH
+      SNOWFLAKE_DATABASE: PROD_DB
+      SNOWFLAKE_AUTHENTICATOR: SNOWFLAKE_JWT
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write private key
+        env:
+          KEY: ${{ secrets.PROD_DBT_PRIVATE_KEY }}
+        run: |
+          umask 077
+          printf '%s\n' "$KEY" > "$RUNNER_TEMP/prod_dbt_user.p8"
+          echo "SNOWFLAKE_PRIVATE_KEY_FILE=$RUNNER_TEMP/prod_dbt_user.p8" >> "$GITHUB_ENV"
+
+      - uses: snowflakedb/snowflake-cli-action@v2.0
+
+      - name: Deploy dbt project object
+        run: snow dbt deploy -x --schema BRONZE budget_dbt --source ./dbt --dbt-version 1.10.15 --default-target prod --force
+
+      - name: Build and test
+        run: snow dbt execute -x --schema BRONZE budget_dbt build --target prod

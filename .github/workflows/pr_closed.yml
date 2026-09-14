@@ -1,0 +1,51 @@
+# Cleanup for the per-PR schemas. Runs whether the PR merged or was abandoned
+# — either way the PR_<n> schemas have served their purpose.
+#
+# Dropping BRONZE_PR_<n> takes the dbt project object with it, since the object
+# lives inside that schema. That is the whole reason the object is deployed
+# there rather than somewhere shared.
+name: PR closed
+run-name: PR #${{ github.event.pull_request.number }} closed — drop its schemas
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  drop-pr-schemas:
+    name: Drop PR_${{ github.event.pull_request.number }} schemas
+    runs-on: ubuntu-latest
+    environment: pre_prod
+    env:
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: PRE_PROD_DBT_USER
+      SNOWFLAKE_ROLE: PRE_PROD_DBT_ROLE
+      SNOWFLAKE_WAREHOUSE: ANALYSIS_WH
+      SNOWFLAKE_DATABASE: PRE_PROD_DB
+      SNOWFLAKE_AUTHENTICATOR: SNOWFLAKE_JWT
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Write private key
+        env:
+          KEY: ${{ secrets.PRE_PROD_DBT_PRIVATE_KEY }}
+        run: |
+          umask 077
+          printf '%s\n' "$KEY" > "$RUNNER_TEMP/pre_prod_dbt_user.p8"
+          echo "SNOWFLAKE_PRIVATE_KEY_FILE=$RUNNER_TEMP/pre_prod_dbt_user.p8" >> "$GITHUB_ENV"
+
+      - uses: snowflakedb/snowflake-cli-action@v2.0
+
+      # PRE_PROD_DBT_ROLE created these schemas and therefore owns them.
+      # IF EXISTS throughout: a PR that never ran the dbt job, or one closed
+      # twice, must not fail here.
+      - name: Drop schemas
+        run: |
+          snow sql -x -q "
+            DROP SCHEMA IF EXISTS PRE_PROD_DB.BRONZE_PR_${PR};
+            DROP SCHEMA IF EXISTS PRE_PROD_DB.SILVER_PR_${PR};
+            DROP SCHEMA IF EXISTS PRE_PROD_DB.GOLD_PR_${PR};
+          "

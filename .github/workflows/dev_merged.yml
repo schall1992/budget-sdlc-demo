@@ -1,0 +1,92 @@
+# Merge to `dev` promotes into the shared pre_prod schemas. No suffix here —
+# DBT_DEV_SCHEMA_SUFFIX is left unset so generate_schema_name yields BRONZE,
+# SILVER, GOLD unadorned.
+name: dev merged
+run-name: dev updated by ${{ github.actor }}
+
+on:
+  push:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            infra:
+              - 'infra/**'
+
+  terraform-apply:
+    name: Terraform apply (pre_prod)
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    environment: infra
+    env:
+      SNOWFLAKE_ORGANIZATION_NAME: epgqqsk
+      SNOWFLAKE_ACCOUNT_NAME: kn46620
+      SNOWFLAKE_USER: GITHUB_ACTIONS_SERVICE_USER
+      SNOWFLAKE_AUTHENTICATOR: SNOWFLAKE_JWT
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_RAW }}
+      TF_WORKSPACE: budget-pre-prod
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.16"
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform init
+        working-directory: infra
+        run: terraform init -input=false
+
+      # State lives in HCP, so there is nothing to commit back to the branch.
+      - name: Terraform apply
+        working-directory: infra
+        run: terraform apply -auto-approve -input=false -no-color -var-file=envs/pre_prod.tfvars
+
+  dbt-build:
+    name: dbt build into PRE_PROD_DB
+    needs: [changes, terraform-apply]
+    if: ${{ always() && (needs.terraform-apply.result == 'success' || needs.terraform-apply.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    environment: pre_prod
+    env:
+      SNOWFLAKE_CLI_FEATURES_ENABLE_DBT: true
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: PRE_PROD_DBT_USER
+      SNOWFLAKE_ROLE: PRE_PROD_DBT_ROLE
+      SNOWFLAKE_WAREHOUSE: ANALYSIS_WH
+      SNOWFLAKE_DATABASE: PRE_PROD_DB
+      SNOWFLAKE_AUTHENTICATOR: SNOWFLAKE_JWT
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write private key
+        env:
+          KEY: ${{ secrets.PRE_PROD_DBT_PRIVATE_KEY }}
+        run: |
+          umask 077
+          printf '%s\n' "$KEY" > "$RUNNER_TEMP/pre_prod_dbt_user.p8"
+          echo "SNOWFLAKE_PRIVATE_KEY_FILE=$RUNNER_TEMP/pre_prod_dbt_user.p8" >> "$GITHUB_ENV"
+
+      - uses: snowflakedb/snowflake-cli-action@v2.0
+
+      # BRONZE is Terraform-managed, so unlike the PR job there is no
+      # CREATE SCHEMA step here.
+      - name: Deploy dbt project object
+        run: snow dbt deploy -x --schema BRONZE budget_dbt --source ./dbt --dbt-version 1.10.15 --force
+
+      - name: Build and test
+        run: snow dbt execute -x --schema BRONZE budget_dbt build --target dev
