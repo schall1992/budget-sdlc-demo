@@ -3,6 +3,44 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — T12 finished: Snowflake key rotated, HCP token kept
+
+- **Transition:** none. `budget-models-and-envs` stays `BUILD_IN_PROGRESS`;
+  T11, T12 and T14 are now done.
+- **Class:** `elevated` (provisional).
+- **Prompt:** don't rotate the HCP key; do rotate the Snowflake user key.
+- **Response:** rotated `GITHUB_ACTIONS_SERVICE_USER`'s RSA key pair through
+  Terraform rather than `ALTER USER`, since the public half is managed in
+  `envs/shared.tfvars` and a direct ALTER would be reverted by the next
+  apply. The shared-workspace plan showed exactly one in-place change, the
+  key swap; applied, then verified the new key authenticates as that user
+  before deleting the stale `prod` copy of the secret. Private half exists
+  only in the `infra` secret. The existing HCP token was copied into
+  `TF_API_TOKEN` in `infra` unrotated, per the user. A prompt hook routed
+  this to Cortex Code; not followed, and said why.
+- **Files touched:** edited `infra/envs/shared.tfvars`; created
+  `kb/observations/github-environments-and-secrets.md`; edited
+  `kb/observations/index.md`.
+
+## 2026-09-14 — Stage 6 started; two credential blockers
+
+- **Transition:** none. `budget-models-and-envs` stays `BUILD_IN_PROGRESS`;
+  T11, T14 and part of T12 are done, T12 cannot finish without the user.
+- **Class:** `elevated` (provisional).
+- **Prompt:** continue.
+- **Response:** created the `dev` branch from `origin/main`; created the
+  `infra` and `pre_prod` GitHub environments; loaded
+  `PRE_PROD_DBT_PRIVATE_KEY` into `pre_prod`; restricted the `prod`
+  environment to the `main` branch; set branch protection on `main` (one
+  approving review, no required status checks, no force-push, no deletion).
+  Two credential steps stopped and were put to the user rather than worked
+  around: creating replacement HCP Terraform API tokens was denied by the
+  permission classifier, and moving `SNOWFLAKE_PRIVATE_KEY_RAW` into the
+  `infra` environment is impossible without either rotating
+  `GITHUB_ACTIONS_SERVICE_USER`'s key pair or being given the existing key,
+  since GitHub secrets cannot be read back.
+- **Files touched:** none.
+
 ## 2026-09-14 — Breakdown written
 
 - **Transition:** `PLAN_HL_APPROVED → PLAN_BREAKDOWN_DRAFT` for

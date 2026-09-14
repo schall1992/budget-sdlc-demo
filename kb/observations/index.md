@@ -18,6 +18,10 @@ would otherwise have to rediscover.
   backend replacing the committed state file: HCP org `osusam28-main`, three
   `local`-execution workspaces tagged `budget`, and where the API token
   lives.
+- [github-environments-and-secrets.md](github-environments-and-secrets.md) —
+  the `infra`/`pre_prod`/`prod` environments, which credential lives in each,
+  the `main`-only restriction on `prod`, and the CI service user key
+  rotation. The only record of secrets GitHub will not read back.
 - [github-actions-service-user-bootstrap.md](github-actions-service-user-bootstrap.md)
   — `github_actions_service_user` was hand-created via Cortex ahead of
   Terraform, with both OIDC and key-pair auth; imported into Terraform

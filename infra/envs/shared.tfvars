@@ -8,5 +8,10 @@ warehouse_name    = "ANALYSIS_WH"
 service_user_name = "GITHUB_ACTIONS_SERVICE_USER"
 
 # Public key. Committed deliberately; the private half lives only in the
-# SNOWFLAKE_PRIVATE_KEY_RAW GitHub secret.
-service_user_rsa_public_key = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyqFJSBl3A8GrDFZ8CpSUJnZsy9nxgD3qhXli8byz0KNMsoD++KD11Y719RJS+TbDg6EeDZt5UfwERL1YWkhbGrqkibtfeUU0OBbjwLHSW0RvXNRH3x8ONC0H5ty/nNNTq1EVODLT5A9Xl+pi9V194xoYW2BuvdYd5yaDB0gS9P7MmM8tRvjy4Ibrz5ayif/P2af+hBUibK4jD4NAoVYVSvtGiU+LKcn5T02m3GybSO1nwN/HkFdSwn9DMg9r/+r80eQazEjWsWwHpHqzJZ0vG1odB+co0Lk/PXs6XfmF2tAKb0FeWZtKopIrFdqaa0tFRveZyCeB7ghPZWOs8bScFQIDAQAB"
+# SNOWFLAKE_PRIVATE_KEY_RAW GitHub secret, in the `infra` environment.
+#
+# Rotated 2026-09-14: the secret had to move from the `prod` environment to
+# `infra`, and GitHub will not read a secret back, so the pair was replaced
+# rather than copied. The previous public key is in git history if the old
+# private half ever resurfaces and needs matching to it.
+service_user_rsa_public_key = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6PRcG0IyOrpNIBVrXjFstlQpI1zg86cywhfKL1TKcMapTE9IcWKvQwTn1ROVwf0sPurmiAhBEnGw0Nk73VsFWj5OUem9hy1VJqv55u2Cl11nTUzu9wjXYNkelsQwhzlxoJnp+wXXxJ4/iroYOxwNomkfwFwujd+kTHDqy5nzLTm7L2mQ3mPDBu/IsltW15vAX6auGw9MEFZ7qp39ZceynuW1BoB7RbRZZl/+GIvuEFsv7bI8Xc3Q3X/fE1NGyKkewdt4UWoTcNx9Z5d/YcTNep6D40F9NDK/eqRL0hBMEBaRqvcWTghQrg5WbVMDZ/q0D4Q9W1K4JRHNzYcfJExMWwIDAQAB"

@@ -4,6 +4,14 @@ Newest entry first. Records additions and meaningful changes to concepts in
 this bundle. Distinct from the repo-root `log.md`, which logs the SDLC
 process itself.
 
+## 2026-09-14 — CI service user key rotated; secrets placed
+
+- Added `observations/github-environments-and-secrets.md`: the three GitHub
+  environments, which credential sits in each, the `main`-only restriction on
+  `prod`, and the rotation of `GITHUB_ACTIONS_SERVICE_USER`'s key pair.
+  Written because GitHub cannot read a secret back, so nothing else records
+  this.
+
 ## 2026-09-14
 
 - Updated `observations/snowflake-account-baseline.md` — added why the
