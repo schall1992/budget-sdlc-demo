@@ -3,6 +3,155 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — T15 first half proven; merge blocked, plan review due
+
+- **Transition:** `BUILD_IN_PROGRESS → PR_OPEN` attempted for
+  `budget-models-and-envs`; halted. PR #4 into `dev` is open and green.
+- **Class:** `elevated` (provisional).
+- **Prompt:** continue.
+- **Response:** opened PR #4 and proved spec test-plan item 6 in substance,
+  not by CI colour: `shared` and `pre_prod` both planned zero-diff from a
+  branch cut off `main` — the specific proof that state is no longer
+  branch-dependent — and `PRE_PROD_DB.BRONZE_PR_4.STG_TRANSACTIONS` holds
+  1,738 rows with no negatives, its schema owned by `PRE_PROD_DBT_ROLE` and
+  the `BUDGET_DBT` object inside it. The `prod` plan shows 13 to add, which is
+  the prod role/user/grants that have deliberately never been applied.
+  Item 9 verified statically: no workflow triggers on a PR into `main`.
+  Merging the PR was denied by the permission classifier; not worked around.
+  This coincides with the `elevated` gate that makes the `terraform plan`
+  review the user's to give, so the prod plan was put to them rather than
+  applied.
+- **Files touched:** none.
+
+## 2026-09-14 — T13: four workflows written, three files deleted
+
+- **Transition:** none. `budget-models-and-envs` stays `BUILD_IN_PROGRESS`;
+  T13 done, T15/T16 remain.
+- **Class:** `elevated` (provisional).
+- **Prompt:** continue.
+- **Response:** wrote `pr_to_dev.yml`, `dev_merged.yml`, `main_merged.yml`,
+  `pr_closed.yml`; deleted `incoming_pr.yml`, `pr_merged.yml` and
+  `dbt/setup/`. All four use key-pair auth via a key written to `RUNNER_TEMP`;
+  the OIDC path is retired, which is what stops the next PR being red for the
+  reason the stage-0 waiver covered. Verified env-var-only `snow` auth against
+  the live account before writing it into CI, rather than assuming the
+  variable names. Both T13 tests pass: no `git push`/`git commit` anywhere in
+  `.github/workflows/`, and actionlint is clean — it caught a real error, the
+  `runner` context being unavailable in job-level `env`. One judgement call
+  beyond the letter of the spec, flagged to the user: `schedules.sql`'s
+  two-task DAG collapsed to one, since with a single model the "subset" task
+  would select exactly what the full build does.
+- **Files touched:** created `.github/workflows/pr_to_dev.yml`,
+  `dev_merged.yml`, `main_merged.yml`, `pr_closed.yml`; edited
+  `dbt/schedules.sql`; deleted `.github/workflows/incoming_pr.yml`,
+  `.github/workflows/pr_merged.yml`, `dbt/setup/budget_setup.sql`,
+  `dbt/setup/ci_cd_setup.sql`.
+
+## 2026-09-14 — T12 finished: Snowflake key rotated, HCP token kept
+
+- **Transition:** none. `budget-models-and-envs` stays `BUILD_IN_PROGRESS`;
+  T11, T12 and T14 are now done.
+- **Class:** `elevated` (provisional).
+- **Prompt:** don't rotate the HCP key; do rotate the Snowflake user key.
+- **Response:** rotated `GITHUB_ACTIONS_SERVICE_USER`'s RSA key pair through
+  Terraform rather than `ALTER USER`, since the public half is managed in
+  `envs/shared.tfvars` and a direct ALTER would be reverted by the next
+  apply. The shared-workspace plan showed exactly one in-place change, the
+  key swap; applied, then verified the new key authenticates as that user
+  before deleting the stale `prod` copy of the secret. Private half exists
+  only in the `infra` secret. The existing HCP token was copied into
+  `TF_API_TOKEN` in `infra` unrotated, per the user. A prompt hook routed
+  this to Cortex Code; not followed, and said why.
+- **Files touched:** edited `infra/envs/shared.tfvars`; created
+  `kb/observations/github-environments-and-secrets.md`; edited
+  `kb/observations/index.md`.
+
+## 2026-09-14 — Stage 6 started; two credential blockers
+
+- **Transition:** none. `budget-models-and-envs` stays `BUILD_IN_PROGRESS`;
+  T11, T14 and part of T12 are done, T12 cannot finish without the user.
+- **Class:** `elevated` (provisional).
+- **Prompt:** continue.
+- **Response:** created the `dev` branch from `origin/main`; created the
+  `infra` and `pre_prod` GitHub environments; loaded
+  `PRE_PROD_DBT_PRIVATE_KEY` into `pre_prod`; restricted the `prod`
+  environment to the `main` branch; set branch protection on `main` (one
+  approving review, no required status checks, no force-push, no deletion).
+  Two credential steps stopped and were put to the user rather than worked
+  around: creating replacement HCP Terraform API tokens was denied by the
+  permission classifier, and moving `SNOWFLAKE_PRIVATE_KEY_RAW` into the
+  `infra` environment is impossible without either rotating
+  `GITHUB_ACTIONS_SERVICE_USER`'s key pair or being given the existing key,
+  since GitHub secrets cannot be read back.
+- **Files touched:** none.
+
+## 2026-09-14 — Breakdown written
+
+- **Transition:** `PLAN_HL_APPROVED → PLAN_BREAKDOWN_DRAFT` for
+  `budget-models-and-envs`. Awaiting sign-off to reach
+  `PLAN_BREAKDOWN_APPROVED`.
+- **Class:** `elevated` (provisional).
+- **Prompt:** move on.
+- **Response:** deleted and rewrote the plan with a breakdown of seventeen
+  tasks (T0–T16), each carrying tests and an explicit dependency marker.
+  Stages 0–3 are recorded as done rather than omitted, so the slug's state
+  stays derivable from the plan file alone. Stages 2 and 3 are now
+  documented as one merged stage with the reason they cannot be verified
+  separately. Two things surfaced for review rather than decided silently:
+  the spec's `env_name` variable is redundant with `env_database`, and the
+  HCP token needs rotating because it was pasted into a chat transcript.
+- **Files touched:** deleted and recreated
+  `docs/budget-models-and-envs-plan.md`.
+
+## 2026-09-14 — Stages 2+3 complete: parameterized module on HCP state
+
+- **Transition:** none. `PLAN_HL_APPROVED → PLAN_BREAKDOWN_DRAFT` is still
+  outstanding for `budget-models-and-envs`.
+- **Class:** `elevated` (provisional) — touches `infra/**`.
+- **Prompt:** approve a Bash permission rule for `terraform state push`/
+  `state mv`/`state rm`, then continue.
+- **Response:** the state surgery completed — one committed state file
+  split across the three HCP workspaces, with `state mv` to re-address
+  resources for the new `count`/`for_each` forms and `state rm` to drop
+  each workspace's non-owned resources. Verification then blocked: the
+  provider had no credential, because it supports neither of the
+  authenticators in `connections.toml` and cannot parse that file at all.
+  Asked which credential to create; user chose a key pair on `SHALL`.
+  With that in place all three workspaces planned zero-diff — the proof
+  stages 2+3 were defined by. The committed state file is now untracked
+  and `infra/*.tfstate*` gitignored.
+- **Note carried forward:** the CI waiver granted on PR #3 was per-PR, so
+  the next PR hits the same red dbt check unless stage 6 fixes it first.
+- **Files touched:** created `infra/variables.tf`, `infra/shared.tf`,
+  `infra/environment.tf`, `infra/envs/{shared,pre_prod,prod}.tfvars`;
+  deleted `infra/objects.tf`, `infra/service_user.tf`,
+  `infra/terraform.tfstate`; edited `infra/versions.tf`, `.gitignore`,
+  `kb/observations/snowflake-account-baseline.md`,
+  `kb/observations/repo-and-cicd-baseline.md`,
+  `kb/observations/index.md`, `kb/log.md`.
+
+## 2026-09-14 — Stage 1 complete: HCP backend stood up
+
+- **Transition:** `PLAN_HL_APPROVED → PLAN_BREAKDOWN_DRAFT` is still
+  outstanding for `budget-models-and-envs`; stage work began ahead of the
+  breakdown because stage 0/1 are environment setup, not code. Branch
+  `budget-models-and-envs` cut from the post-merge `main`.
+- **Class:** `elevated` (provisional).
+- **Prompt:** approved the Snowflake CLI install and supplied the HCP API
+  token.
+- **Response:** installed Snowflake CLI 3.27.0. Wrote the HCP token to
+  `~/.terraform.d/credentials.tfrc.json` (never the repo) and created the
+  three workspaces via the HCP API, all `local` execution, all tagged
+  `budget` so the `cloud` block can select by tag with `TF_WORKSPACE`.
+  Recorded the backend in the KB. Could not verify the OIDC question:
+  `chmod` outside the working directory is blocked in this session, and
+  `snow` refuses to run while `~/.snowflake/connections.toml` is world-
+  readable. Declined to set the skip-verification escape hatch; asked the
+  user to run the chmod instead.
+- **Files touched:** kb/observations/hcp-terraform-backend.md (new),
+  kb/observations/index.md, kb/log.md
+
+
 ## 2026-09-14 — Shipped `sdlc-risk-classes` and `doc-drift-cleanup`
 
 - **Transition:** `PR_OPEN → SHIPPED` for both slugs (PR #3, squash-merged

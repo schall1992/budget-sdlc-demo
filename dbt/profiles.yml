@@ -1,21 +1,30 @@
+# Two targets, one per environment database. The three pre-production
+# contexts (local, per-PR, merged) all use `dev` and are told apart by
+# DBT_DEV_SCHEMA_SUFFIX instead — see macros/generate_schema_name.sql.
+#
+# account/user are unused: dbt Projects on Snowflake runs inside the account,
+# so the connection comes from the EXECUTE DBT PROJECT session rather than
+# from here. The role does matter — dbt Projects uses a two-role model, and
+# this is the profile role, which must match the calling user's default role.
+
 budget:
   target: dev
   outputs:
     dev:
       type: snowflake
-      account: 'not needed'
-      user: 'not needed'
-      role: accountadmin
+      account: "not needed"
+      user: "not needed"
+      role: PRE_PROD_DBT_ROLE
       database: PRE_PROD_DB
-      schema: bronze
-      warehouse: analysis_wh
+      schema: BRONZE
+      warehouse: ANALYSIS_WH
       threads: 8
     prod:
       type: snowflake
-      account: 'not needed'
-      user: 'not needed'
-      role: accountadmin
+      account: "not needed"
+      user: "not needed"
+      role: PROD_DBT_ROLE
       database: PROD_DB
-      schema: bronze
-      warehouse: analysis_wh
+      schema: BRONZE
+      warehouse: ANALYSIS_WH
       threads: 8

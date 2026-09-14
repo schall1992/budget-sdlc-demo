@@ -1,0 +1,34 @@
+version: 2
+
+models:
+  - name: stg_transactions
+    description: >
+      Raw budget transactions with currency text parsed to numbers and a
+      signed amount derived. One row per source transaction.
+    columns:
+      - name: transaction_date
+        description: Date of the transaction. Already a DATE in the source.
+        tests: [not_null]
+
+      - name: account
+        tests: [not_null]
+
+      - name: outflow
+        description: Money out, parsed from currency text. Zero when the row is an inflow.
+        # not_null is what catches a silent parse failure: TRY_TO_DECIMAL
+        # turns an unparseable value into NULL rather than erroring, so
+        # without this test a broken cast would ship a column of nulls.
+        tests: [not_null, is_non_negative]
+
+      - name: inflow
+        description: Money in, parsed from currency text. Zero when the row is an outflow.
+        tests: [not_null, is_non_negative]
+
+      - name: amount
+        description: inflow - outflow. Negative for spending, positive for income.
+        tests: [not_null]
+
+# Every row is one-sided: a transaction is either money in or money out,
+# never both and never neither. True of all 1,738 source rows. This is the
+# test that would catch the two currency columns being parsed into each
+# other or one of them being dropped — which the per-column tests would not.

@@ -4,7 +4,36 @@ Newest entry first. Records additions and meaningful changes to concepts in
 this bundle. Distinct from the repo-root `log.md`, which logs the SDLC
 process itself.
 
+## 2026-09-14 — CI service user key rotated; secrets placed
+
+- Added `observations/github-environments-and-secrets.md`: the three GitHub
+  environments, which credential sits in each, the `main`-only restriction on
+  `prod`, and the rotation of `GITHUB_ACTIONS_SERVICE_USER`'s key pair.
+  Written because GitHub cannot read a secret back, so nothing else records
+  this.
+
 ## 2026-09-14
+
+- Updated `observations/snowflake-account-baseline.md` — added why the
+  Terraform provider can use neither `connections.toml` profile
+  (`OAUTH_AUTHORIZATION_CODE` unsupported, `externalbrowser` rejected by
+  the account, and the file's top-level key breaks the provider's TOML
+  decoder) and the RSA key pair added to `SHALL` to work around it.
+- Updated `observations/repo-and-cicd-baseline.md` — corrected the
+  Terraform resource count (ten, not nine) and marked the whole Terraform
+  section superseded by the HCP/parameterized-module refactor.
+- Added `observations/hcp-terraform-backend.md` — HCP Terraform org
+  `osusam28-main` and the three `local`-execution workspaces
+  (`budget-shared`, `budget-pre-prod`, `budget-prod`) tagged `budget`,
+  created as stage 1 of `budget-models-and-envs`. Records that the org
+  default execution mode is `remote` and each workspace overrides it, and
+  that workspace tags must be set through the tags relationship endpoint
+  because `tag-names` on create is silently ignored.
+- Updated `observations/repo-and-cicd-baseline.md` twice — first to record
+  that the `incoming_pr.yml` dbt job has never succeeded (empty
+  `SNOWFLAKE_ACCOUNT`), then to record that OIDC workload identity is not
+  configured for the subject GitHub presents, contradicting a comment in
+  `infra/service_user.tf`. Logged as a disagreement, not reconciled.
 
 - Added `observations/repo-and-cicd-baseline.md` — the repo's own current
   shape (single Terraform root with committed state, `main`-only branching,
