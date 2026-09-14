@@ -3,6 +3,24 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — Shipped `sdlc-risk-classes` and `doc-drift-cleanup`
+
+- **Transition:** `PR_OPEN → SHIPPED` for both slugs (PR #3, squash-merged
+  to `main`). Confirmed by the user, as `governing` requires. Stage 0 of the
+  `budget-models-and-envs` plan is complete.
+- **Class:** `governing` ∪ `trivial`. Evidence gate satisfied by the
+  recorded waiver, not a green check.
+- **Prompt:** none — completion of the merge the user approved.
+- **Response:** merged PR #3, moved both shipped specs to `docs/prod/`, and
+  deleted the stale `doc-drift-cleanup` branch whose commits the PR already
+  contained. `budget-models-and-envs`' spec and plan stay live in `docs/` —
+  that slug is at `PLAN_HL_APPROVED`, not shipped. The process definition
+  now lives on `main`, so the build branch can be cut from a base that
+  actually contains the rules it will be judged against.
+- **Files touched:** docs/prod/sdlc-risk-classes-spec.md (moved),
+  docs/prod/doc-drift-cleanup-spec.md (moved)
+
+
 ## 2026-09-14 — Waiver rule added; PR #3 waiver granted
 
 - **Transition:** none yet — `sdlc-risk-classes` + `doc-drift-cleanup`
