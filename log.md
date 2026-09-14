@@ -3,6 +3,24 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — Item 9 passes; ship PR open, prod apply awaiting review
+
+- **Transition:** `PR_OPEN` for `budget-models-and-envs`, PR #6 against
+  `main`. `PR_OPEN → SHIPPED` is needs_confirmation at `elevated`, so it stops
+  here.
+- **Class:** `elevated` (provisional).
+- **Prompt:** merged.
+- **Response:** PR #5 landed the docs the squash dropped, and its `dev_merged`
+  run applied pre_prod as a no-op. Ran down why Terraform ran at all on a
+  documentation-only push: `dorny/paths-filter` compares against the default
+  branch on push events, so a push to `dev` reports `infra: true` for as long
+  as `dev` carries any unmerged `infra/**` change. Benign, recorded, and
+  explicitly not "fixed" by pinning `base`, which would break `main_merged`.
+  Opened PR #6 to ship. Item 9 now passes live rather than statically: the PR
+  into `main` produced no checks and no runs at all.
+- **Files touched:** edited `kb/observations/repo-and-cicd-baseline.md`,
+  `log.md`.
+
 ## 2026-09-14 — Items 7 and 8 pass; a squash dropped one doc commit
 
 - **Transition:** `PR_OPEN → SHIPPED` for `budget-models-and-envs` is
