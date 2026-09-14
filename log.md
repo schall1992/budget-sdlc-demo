@@ -3,6 +3,26 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — CI found never-green; `governing` evidence gate unsatisfied
+
+- **Transition:** `PR_OPEN` reached for `sdlc-risk-classes` +
+  `doc-drift-cleanup` (PR #3), but `PR_OPEN → SHIPPED` is blocked — the
+  `governing` gate requires CI green and CI is red.
+- **Class:** `governing` ∪ `trivial` (effective, from the real diff).
+- **Prompt:** none — continuation of stage 0 of the approved plan.
+- **Response:** opened PR #3 and checked CI rather than asserting the work
+  was done. The dbt job failed. Checking history showed it has failed on
+  every run since the repo began (eight runs, three PRs, 2026-09-10
+  onward), always at `snow connection test` with "Account must be
+  specified": the `prod` GitHub environment has one secret and no
+  variables, so `SNOWFLAKE_ACCOUNT` is empty. Both earlier PRs were merged
+  red. The job also has no paths-filter, so a docs-only PR is gated on a
+  dbt build that cannot pass. Recorded in the CI baseline observation and
+  raised with the user rather than merging red on the very PR that
+  introduces the rule that evidence comes from outside the agent.
+- **Files touched:** kb/observations/repo-and-cicd-baseline.md
+
+
 ## 2026-09-14 — High-level plan approved; process work split off to ship first
 
 - **Transition:** `PLAN_HL_DRAFT → PLAN_HL_APPROVED` for

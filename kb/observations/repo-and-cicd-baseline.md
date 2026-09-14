@@ -53,6 +53,22 @@ their Terraform jobs via `dorny/paths-filter`.
 (`use-oidc: true`) and declare `environment: prod` to match the OIDC
 subject. Easy to misread as one scheme — it is not.
 
+**The dbt job in `incoming_pr.yml` has never succeeded.** Every run of that
+workflow since the repo began — 2026-09-10 through 2026-09-14, eight runs
+across three PRs — has ended in failure, always at `snow connection test -x`
+with `251001: Account must be specified`. The `prod` GitHub environment
+holds exactly one secret (`SNOWFLAKE_PRIVATE_KEY_RAW`) and **zero
+variables**, so `SNOWFLAKE_ACCOUNT`, `SNOWFLAKE_DATABASE`, and
+`SNOWFLAKE_SCHEMA` all resolve to empty strings. Both prior PRs were merged
+red. The Terraform jobs are unaffected — they hardcode
+`SNOWFLAKE_ORGANIZATION_NAME`/`SNOWFLAKE_ACCOUNT_NAME` rather than reading a
+secret.
+
+Two consequences: the OIDC path has never been proven to work end to end
+(the run fails before authentication is even attempted), and the job runs
+unconditionally on every PR to `main` — it has no `paths-filter` gate, so a
+docs-only PR is gated on a dbt build that cannot pass.
+
 `pr_merged.yml` applies to production with no review step after the merge.
 This is why `infra/**` and `.github/workflows/**` are `elevated` class in
 [sdlc/classes.md](../../sdlc/classes.md): the merge *is* the deploy.
