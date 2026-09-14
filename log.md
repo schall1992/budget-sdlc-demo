@@ -3,6 +3,41 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — Items 7 and 8 pass; a squash dropped one doc commit
+
+- **Transition:** `PR_OPEN → SHIPPED` for `budget-models-and-envs` is
+  partially through — PR #4 is merged into `dev`, not yet into `main`.
+- **Class:** `elevated` (provisional).
+- **Prompt:** merged.
+- **Response:** verified spec test-plan items 7 and 8 against Snowflake rather
+  than against CI colour: `PRE_PROD_DB.BRONZE.STG_TRANSACTIONS` holds 1,738
+  rows with no negatives, and the three `PR_4` schemas are gone along with the
+  dbt project object inside them. Noticed the merge was a squash, which
+  collapsed the branch to one commit and left the last one behind — a
+  documentation-only commit carrying two log entries and the
+  denial-vs-absence finding. No code was lost. Re-landing it on a branch cut
+  from `dev` so it ships with the rest.
+- **Files touched:** edited `log.md`.
+
+## 2026-09-14 — Merge denied again; half of T16 proven instead
+
+- **Transition:** none. `budget-models-and-envs` stays at `PR_OPEN` with PR #4
+  open and green against `dev`.
+- **Class:** `elevated` (provisional).
+- **Prompt:** continue.
+- **Response:** retried `gh pr merge 4`; denied by the permission classifier a
+  second time, so the block is standing rather than something the user's
+  go-ahead clears. Did not reproduce the merge as `git push origin dev`, which
+  would bypass the intent of the denial rather than work around it. Ran the
+  half of T16 that does not depend on the merge: `PRE_PROD_DBT_ROLE` cannot
+  create a table in `PROD_DB.BRONZE`. Snowflake returns "does not exist or not
+  authorized", which on its own is worth nothing — exactly the ambiguity T16
+  was written to guard against — so it was paired with a privileged read
+  confirming the schema does exist. The other half needs `PROD_DBT_ROLE`,
+  which the `main` merge creates.
+- **Files touched:** edited `kb/observations/snowflake-account-baseline.md`,
+  `kb/log.md`.
+
 ## 2026-09-14 — T15 first half proven; merge blocked, plan review due
 
 - **Transition:** `BUILD_IN_PROGRESS → PR_OPEN` attempted for
