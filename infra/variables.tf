@@ -44,6 +44,50 @@ variable "env_schemas" {
   EOT
 }
 
+variable "dbt_role_name" {
+  type        = string
+  default     = null
+  description = "Role that owns this environment's schemas, e.g. PRE_PROD_DBT_ROLE. Required when create_env is true."
+}
+
+variable "dbt_user_name" {
+  type        = string
+  default     = null
+  description = "Service user for this environment's dbt builds. Required when create_env is true."
+}
+
+variable "dbt_user_rsa_public_key" {
+  type        = string
+  default     = null
+  description = <<-EOT
+    Public half of this environment's dbt service-user key pair. Safe to
+    commit. The private half lives only in ~/.snowflake/keys (pre_prod) or a
+    GitHub environment secret (prod) — never in this repo.
+  EOT
+}
+
+variable "grant_create_schema" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    Grant CREATE SCHEMA on this environment's database. True for pre_prod,
+    which builds per-developer and per-PR suffixed schemas; false for prod,
+    which has only the three Terraform-managed ones.
+  EOT
+}
+
+variable "source_database" {
+  type        = string
+  default     = "SOURCE_DB"
+  description = "Raw source database. Not Terraform-managed — this module only grants read on it."
+}
+
+variable "source_schema" {
+  type        = string
+  default     = "RAW"
+  description = "Schema within source_database holding the raw tables."
+}
+
 variable "warehouse_name" {
   type        = string
   default     = "ANALYSIS_WH"
