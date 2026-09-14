@@ -3,6 +3,32 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — CI advanced one layer; OIDC found unconfigured
+
+- **Transition:** none. `sdlc-risk-classes` + `doc-drift-cleanup` stay at
+  `PR_OPEN` (PR #3); the `governing` CI-green gate is still unsatisfied.
+- **Class:** `governing` ∪ `trivial`. Unchanged — the fix touched GitHub
+  account configuration, not repo paths.
+- **Prompt:** asked what, outside Terraform, actually consumes the Snowflake
+  environment variables; then chose to set only a repo-level
+  `SNOWFLAKE_ACCOUNT` and see how far CI gets.
+- **Response:** traced consumers — only the four dbt jobs across the two
+  workflows; Terraform hardcodes org/account and `profiles.yml` sets its own
+  database/schema per target. Established that `SNOWFLAKE_ACCOUNT` does not
+  vary by environment (one account holds both databases) and is not secret,
+  while `SNOWFLAKE_DATABASE`/`SNOWFLAKE_SCHEMA` place the dbt project object
+  rather than select a build target — so environment selection currently has
+  two independent, unsynchronised sources of truth. Set the repo-level
+  secret; CI moved past the account error to a JWT rejection, showing OIDC
+  workload identity is not configured for the presented subject. This
+  contradicts a comment in `infra/service_user.tf` asserting it already is.
+  Recorded the disagreement rather than reconciling it, per content
+  discipline, and did not attempt a fix — the remedy is a Snowflake-side
+  change to a Terraform-managed user, which is `elevated` and belongs in the
+  build stages.
+- **Files touched:** kb/observations/repo-and-cicd-baseline.md
+
+
 ## 2026-09-14 — CI found never-green; `governing` evidence gate unsatisfied
 
 - **Transition:** `PR_OPEN` reached for `sdlc-risk-classes` +

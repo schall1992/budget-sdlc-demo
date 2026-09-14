@@ -69,6 +69,34 @@ Two consequences: the OIDC path has never been proven to work end to end
 unconditionally on every PR to `main` — it has no `paths-filter` gate, so a
 docs-only PR is gated on a dbt build that cannot pass.
 
+### OIDC is not actually configured — the code comment says otherwise
+
+Setting a repo-level `SNOWFLAKE_ACCOUNT` secret (`epgqqsk-kn46620`) on
+2026-09-14 got the job past the account error and to a second, deeper
+failure:
+
+```
+394729 (08001): ... attempting to authenticate the JWT with issuer
+'https://token.actions.githubusercontent.com' and subject
+'repo:schall1992@104527486/budget-sdlc-demo@1357515027:environment:prod'.
+Either the subject or issuer claims were not recognized, or the JWT's
+signature could not be verified.
+```
+
+This **contradicts** the comment in `infra/service_user.tf`, which states
+that OIDC workload identity "is already configured on this user (used by
+the dbt workflows via the Snowflake CLI)" and puts
+`default_workload_identity` in `lifecycle.ignore_changes` on that basis.
+The workflows have never successfully used it. Recorded as a disagreement
+rather than reconciled — resolving it needs a `DESC USER
+GITHUB_ACTIONS_SERVICE_USER` against the account, which requires the
+Snowflake CLI (not yet installed locally).
+
+Two candidate causes, indistinguishable without that query: the workload
+identity was never set at all, or it was set with a subject that does not
+match the one GitHub is presenting (note the immutable-ID form and the
+`:environment:prod` suffix, both of which must match exactly).
+
 `pr_merged.yml` applies to production with no review step after the merge.
 This is why `infra/**` and `.github/workflows/**` are `elevated` class in
 [sdlc/classes.md](../../sdlc/classes.md): the merge *is* the deploy.
