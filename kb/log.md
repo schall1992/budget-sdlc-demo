@@ -6,6 +6,19 @@ process itself.
 
 ## 2026-09-14
 
+- Added `observations/hcp-terraform-backend.md` — HCP Terraform org
+  `osusam28-main` and the three `local`-execution workspaces
+  (`budget-shared`, `budget-pre-prod`, `budget-prod`) tagged `budget`,
+  created as stage 1 of `budget-models-and-envs`. Records that the org
+  default execution mode is `remote` and each workspace overrides it, and
+  that workspace tags must be set through the tags relationship endpoint
+  because `tag-names` on create is silently ignored.
+- Updated `observations/repo-and-cicd-baseline.md` twice — first to record
+  that the `incoming_pr.yml` dbt job has never succeeded (empty
+  `SNOWFLAKE_ACCOUNT`), then to record that OIDC workload identity is not
+  configured for the subject GitHub presents, contradicting a comment in
+  `infra/service_user.tf`. Logged as a disagreement, not reconciled.
+
 - Added `observations/repo-and-cicd-baseline.md` — the repo's own current
   shape (single Terraform root with committed state, `main`-only branching,
   the two workflows and their two different auth mechanisms, dbt-on-Snowflake

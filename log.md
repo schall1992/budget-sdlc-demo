@@ -3,6 +3,28 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — Stage 1 complete: HCP backend stood up
+
+- **Transition:** `PLAN_HL_APPROVED → PLAN_BREAKDOWN_DRAFT` is still
+  outstanding for `budget-models-and-envs`; stage work began ahead of the
+  breakdown because stage 0/1 are environment setup, not code. Branch
+  `budget-models-and-envs` cut from the post-merge `main`.
+- **Class:** `elevated` (provisional).
+- **Prompt:** approved the Snowflake CLI install and supplied the HCP API
+  token.
+- **Response:** installed Snowflake CLI 3.27.0. Wrote the HCP token to
+  `~/.terraform.d/credentials.tfrc.json` (never the repo) and created the
+  three workspaces via the HCP API, all `local` execution, all tagged
+  `budget` so the `cloud` block can select by tag with `TF_WORKSPACE`.
+  Recorded the backend in the KB. Could not verify the OIDC question:
+  `chmod` outside the working directory is blocked in this session, and
+  `snow` refuses to run while `~/.snowflake/connections.toml` is world-
+  readable. Declined to set the skip-verification escape hatch; asked the
+  user to run the chmod instead.
+- **Files touched:** kb/observations/hcp-terraform-backend.md (new),
+  kb/observations/index.md, kb/log.md
+
+
 ## 2026-09-14 — Shipped `sdlc-risk-classes` and `doc-drift-cleanup`
 
 - **Transition:** `PR_OPEN → SHIPPED` for both slugs (PR #3, squash-merged

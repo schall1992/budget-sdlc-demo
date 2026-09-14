@@ -13,6 +13,10 @@ would otherwise have to rediscover.
 - [repo-and-cicd-baseline.md](repo-and-cicd-baseline.md) — the repo's own
   shape: single Terraform root with committed state, `main`-only branching,
   the two workflows, and the two different CI auth mechanisms.
+- [hcp-terraform-backend.md](hcp-terraform-backend.md) — the remote state
+  backend replacing the committed state file: HCP org `osusam28-main`, three
+  `local`-execution workspaces tagged `budget`, and where the API token
+  lives.
 - [github-actions-service-user-bootstrap.md](github-actions-service-user-bootstrap.md)
   — `github_actions_service_user` was hand-created via Cortex ahead of
   Terraform, with both OIDC and key-pair auth; imported into Terraform
