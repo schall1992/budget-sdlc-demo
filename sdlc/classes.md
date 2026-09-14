@@ -91,3 +91,36 @@ because the merge itself is the apply.
 Described by mechanism rather than by workflow filename on purpose: CI file
 names change, and a gate that names them goes stale silently the next time
 they do.
+
+## Waiving a check that fails independently of the change
+
+"CI green" assumes CI is measuring the change. A check that would fail on an
+empty commit is not evidence about the diff — it is evidence about the
+repository. Blocking on it does not make the change safer; it only makes the
+gate untrustworthy, because the first response to a permanently red check is
+to start ignoring red.
+
+A failing check may be waived **only** when all of the following hold:
+
+1. **The diff does not touch any path the check exercises.** A waiver never
+   applies to a check that the change's own paths feed into. This is the
+   load-bearing condition — everything else is bookkeeping.
+2. **The failure pre-dates the change**, demonstrated from run history or a
+   run on `main`, not asserted.
+3. **The cause is identified and written down durably** — in
+   `kb/observations/`, not just in the PR thread. A waiver granted against
+   an unexplained failure is a waiver against an unknown.
+4. **The user grants it explicitly.** An agent may propose a waiver and must
+   never grant itself one. This is the same principle as evidence coming
+   from outside the agent: an agent that can excuse its own gate has no
+   gate.
+5. **It is recorded** in the PR body and in `log.md`, naming the check, the
+   reason, and who granted it.
+
+Waivers are per-PR and never standing. The same check failing on the next
+PR needs its own waiver — which is the friction that stops a waiver from
+quietly becoming the permanent state of the repository.
+
+A waiver excuses the *evidence*, never the *gate*: `PR_OPEN → SHIPPED` still
+needs its `needs_confirmation` for `elevated`/`governing`, and a reviewed
+`terraform plan` is not waivable at all, since the merge is the apply.

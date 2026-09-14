@@ -61,6 +61,30 @@ per class.
 - **Gates are described by mechanism, not by CI filename.** Naming workflow
   files makes the rules go stale silently the next time the files are
   renamed — which the in-flight `budget-models-and-envs` change does.
+- **A check that fails independently of the change may be waived.** See
+  below.
+
+### The waiver rule
+
+Added to `classes.md` after this change's own PR hit the case. "CI green"
+assumes CI is measuring the change; a check that would fail on an empty
+commit is evidence about the repository, not about the diff. Blocking on it
+does not make the change safer — it teaches everyone to ignore red, which
+costs more than the gate was worth.
+
+A waiver requires all of: the diff touches no path the check exercises; the
+failure is demonstrated to pre-date the change; the cause is written down in
+`kb/observations/`; the user grants it explicitly; and it is recorded in the
+PR body and `log.md`. Waivers are per-PR and never standing.
+
+The user-grants-it condition is the same principle as evidence coming from
+outside the agent — an agent that can excuse its own gate has no gate. The
+per-PR condition is deliberate friction: it stops a waiver from silently
+becoming the repository's permanent state.
+
+A waiver excuses the evidence, never the gate. `needs_confirmation` on
+`PR_OPEN → SHIPPED` still applies, and a reviewed `terraform plan` is not
+waivable at all.
 
 ### Changed: every phase file
 
@@ -93,12 +117,34 @@ what class that diff is.
 
 ## Paths touched
 
-`sdlc/**`, `CLAUDE.md`, `docs/**`
+`sdlc/**`, `CLAUDE.md`, `docs/**`, `kb/**`
 
 `sdlc/**` and `CLAUDE.md` put this in the `governing` row of
 [classes.md](../sdlc/classes.md): the process definition itself, where
 loosening a gate is reviewed like an infrastructure change rather than
 edited like config.
+
+## Waiver granted for this change's PR
+
+The `Run on Incoming PR` check is red and is waived. Conditions met:
+
+1. **Independent of the diff** — this change touches no `infra/`, no
+   `.github/workflows/**`, and no `dbt/` path. The check exercises none of
+   what changed.
+2. **Pre-dates the change** — the job has failed on all eight runs since the
+   repo began, across three PRs, two of which were merged red.
+3. **Cause recorded** — two stacked defects, both in
+   [repo-and-cicd-baseline.md](../kb/observations/repo-and-cicd-baseline.md):
+   the `prod` environment had no `SNOWFLAKE_ACCOUNT`, and behind it, OIDC
+   workload identity is not configured for the subject GitHub presents —
+   contradicting a comment in `infra/service_user.tf` that asserts it is.
+4. **Granted by the user**, 2026-09-14.
+5. Recorded here, in the PR body, and in `log.md`.
+
+Not fixed here because the approved `budget-models-and-envs` spec retires
+OIDC entirely in favour of per-environment key-pair users. Repairing it now
+would be `elevated`, out-of-order work on a mechanism scheduled for
+deletion.
 
 ## Known deviation
 

@@ -3,6 +3,31 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — Waiver rule added; PR #3 waiver granted
+
+- **Transition:** none yet — `sdlc-risk-classes` + `doc-drift-cleanup`
+  remain at `PR_OPEN`, now with the evidence gate satisfied by waiver rather
+  than by a green check. `PR_OPEN → SHIPPED` still needs its
+  `needs_confirmation`.
+- **Class:** `governing` ∪ `trivial`.
+- **Prompt:** chose option 1 — waive the failing check and amend
+  `classes.md` to define waivers.
+- **Response:** added a "Waiving a check that fails independently of the
+  change" section to `classes.md`, with five conditions: the diff touches no
+  path the check exercises (the load-bearing one), the failure is
+  demonstrated to pre-date the change, the cause is recorded durably in
+  `kb/observations/`, the user grants it explicitly, and it is recorded in
+  the PR body and here. Waivers are per-PR and never standing; they excuse
+  the evidence, never the gate, and a reviewed `terraform plan` is not
+  waivable at all. Deleted and rewrote the spec rather than editing it in
+  place, per "one live file per slug", adding the waiver rule and the
+  granted waiver record for this PR. Flagged to the user beforehand that an
+  agent writing the exception that unblocks its own PR warrants their
+  review; the explicit-grant condition is the structural answer to that.
+- **Files touched:** sdlc/classes.md, docs/sdlc-risk-classes-spec.md
+  (deleted and rewritten)
+
+
 ## 2026-09-14 — CI advanced one layer; OIDC found unconfigured
 
 - **Transition:** none. `sdlc-risk-classes` + `doc-drift-cleanup` stay at
