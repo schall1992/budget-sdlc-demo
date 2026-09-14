@@ -138,3 +138,20 @@ unrunnable scaffold — see [dbt-scaffold-drift.md](dbt-scaffold-drift.md).
 
 Read directly from the working tree on 2026-09-14: `git branch -a`,
 `git ls-files infra/`, `.gitignore`, and the two workflow files.
+
+## The `infra/**` path filter means different things per trigger
+
+Superseded-baseline note, added 2026-09-14 after `dev_merged` ran a Terraform
+apply on a documentation-only push.
+
+`dorny/paths-filter` defaults its comparison base to the repository's default
+branch on `push` events, not to the previous commit. So on a push to `dev` it
+diffs `main...dev` and reports `infra: true` for as long as `dev` carries any
+unmerged `infra/**` change — regardless of what the pushed commit touched. On
+a push to `main` there is no such gap and it falls back to the previous commit,
+which is the intuitive behaviour.
+
+The consequence is benign but surprising: `dev_merged` re-applies the pre_prod
+workspace on every push to `dev` until `dev` and `main` agree. The apply is a
+no-op when nothing changed. Do not "fix" this by pinning `base` without
+checking what it does to `main_merged`, where the current default is correct.

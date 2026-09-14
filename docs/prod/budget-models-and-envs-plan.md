@@ -1,5 +1,5 @@
 ---
-status: breakdown_draft
+status: breakdown_approved
 ---
 
 # Plan: budget-models-and-envs
@@ -202,6 +202,8 @@ the same fact.
 *Tests:* `terraform validate`; `plan` on `budget-shared` still zero-diff
 (proving the new resources are correctly gated off there).
 
+*Status:* done, commit `224d401`. Merged with T2 — the two cannot be verified separately.
+
 **T4 — Generate the pre-prod key pair.** depends on: T3.
 
 Private key to `~/.snowflake/keys/pre_prod_dbt_user.p8` at mode `600`,
@@ -209,11 +211,15 @@ public half into `infra/envs/pre_prod.tfvars`.
 
 *Tests:* the private key is mode `600`; `git status` shows no key file.
 
+*Status:* done, commit `d295165`. Key at `~/.snowflake/keys/pre_prod_dbt_user.p8`, mode 600.
+
 **T5 — Apply the pre-prod workspace.** depends on: T4.
 
 *Tests:* apply succeeds; a second `plan` reports zero changes; `SHOW GRANTS
 TO ROLE PRE_PROD_DBT_ROLE` matches the spec's list exactly — no more, no
 less.
+
+*Status:* done, commit `d295165`.
 
 **T6 — Add the `budget_pre_prod` connection.** depends on: T5.
 
@@ -224,6 +230,8 @@ would break the CLI.
 
 *Tests:* `snow connection test -c budget_pre_prod` succeeds and reports
 role `PRE_PROD_DBT_ROLE`.
+
+*Status:* done, commit `d295165`.
 
 **T7 — Generate the prod key pair; write prod config without applying.**
 depends on: T3.
@@ -238,6 +246,8 @@ list --env prod` shows the secret.
 
 ## Stage 5 — dbt
 
+*Status:* done, commit `d295165`. Prod key is CI-only and was never stored locally.
+
 **T8 — Suffix mechanism.** depends on: T6.
 
 `macros/generate_schema_name.sql` reading
@@ -247,6 +257,8 @@ empty value, and `dev`/`prod` targets in `profiles.yml`.
 *Tests:* `snow dbt deploy` compiles with no suffix set — this is the
 load-bearing case, since deploy-time compilation cannot see environment
 variables and fails without the macro default.
+
+*Status:* done, commit `c4511b7`. `--env-vars` and `--use-shell-env-vars` exist but are hidden from `--help`; both were verified empirically.
 
 **T9 — The staging model.** depends on: T8.
 
@@ -258,6 +270,8 @@ values, not just non-null — a cast that silently yields `NULL` for
 `$1,234.56` would pass a not-null test on the source column while producing
 a useless model.
 
+*Status:* done, commit `c4511b7`. `test_is_positive_amount` replaced with `is_non_negative` — the spec's choice would have failed on correct data, since 1,606 rows have `inflow = 0`.
+
 **T10 — Prove the local context end to end.** depends on: T9.
 
 `CREATE SCHEMA IF NOT EXISTS PRE_PROD_DB.BRONZE_SHALL`, deploy, then
@@ -268,7 +282,11 @@ exists, row count matches the 1,738 source rows, and all tests pass.
 
 ## Stage 6 — Branching, workflows, repo configuration
 
+*Status:* done, commit `c4511b7`. `PRE_PROD_DB.BRONZE_SHALL`, 1,738 rows.
+
 **T11 — Create the `dev` branch.** depends on: T2.
+
+*Status:* done, commit `fd9c9f2`.
 
 **T12 — GitHub environments and secrets.** depends on: T7.
 
@@ -279,6 +297,8 @@ for stages 1–3 was pasted into a chat transcript.
 
 *Tests:* `gh api` shows three environments with the expected secret names
 and the `prod` branch policy; the rotated token still authenticates.
+
+*Status:* done, commit `fd9c9f2`. The HCP token was **not** rotated — the user decided against it. `GITHUB_ACTIONS_SERVICE_USER`'s key pair was rotated instead, to move it from the `prod` environment to `infra`, since GitHub cannot read a secret back.
 
 **T13 — Write the four workflows and delete what they replace.**
 depends on: T10, T12.
@@ -294,11 +314,15 @@ PR being red for the same reason.
 *Tests:* spec test-plan item 2 — `grep` finds no `git push`/`git commit` in
 any workflow. Each workflow parses (`actionlint` or `gh workflow view`).
 
+*Status:* done, commit `7229258`. `schedules.sql`'s two-task DAG collapsed to one: with a single model a "subset" task selects what the full build does.
+
 **T14 — Branch protection on `main`.** depends on: T11.
 
 Require one review approval, no status checks.
 
 *Tests:* a direct push to `main` is rejected.
+
+*Status:* done, commit `fd9c9f2`.
 
 **T15 — Prove the CI flow end to end.** depends on: T13, T14.
 
@@ -315,6 +339,8 @@ through as "CI went green."
 
 ## Stage 7 — The negative test
 
+*Status:* done. All five items pass, each verified in Snowflake rather than by CI colour. PR #4 → `dev`, PR #6 → `main`; prod applied 13 resources, matching the plan previewed on #4.
+
 **T16 — Prove the roles cannot cross.** depends on: T15.
 
 As `PRE_PROD_DBT_ROLE`, attempt `CREATE TABLE` in `PROD_DB.BRONZE`; as
@@ -324,3 +350,9 @@ As `PRE_PROD_DBT_ROLE`, attempt `CREATE TABLE` in `PROD_DB.BRONZE`; as
 the error text checked — an authorization denial, not a "database does not
 exist" or a connection failure, either of which would pass a naive
 "it threw" assertion while proving nothing.
+
+*Status:* done, by enumeration rather than by the literal attempt in both directions, with the user's agreement.
+
+The pre_prod→prod direction was tested literally and denied. The prod→pre_prod direction cannot be tested from a laptop — `PROD_DBT_USER`'s key is CI-only by design, which is the property being relied on. Grants were enumerated instead, and that is the better evidence anyway: this task demanded the error text be checked, and the error turned out to be `does not exist or not authorized`, byte-identical to what a typo produces.
+
+`PROD_DBT_ROLE` holds nothing on `PRE_PROD_DB`; `PRE_PROD_DBT_ROLE` nothing on `PROD_DB`; `PUBLIC` nothing on either; neither role inherits any role. The last two close the back doors an "it threw" assertion would miss.
