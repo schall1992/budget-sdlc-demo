@@ -3,6 +3,33 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — High-level plan approved; process work split off to ship first
+
+- **Transition:** `PLAN_HL_DRAFT → PLAN_HL_APPROVED` for
+  `budget-models-and-envs` (old plan deleted, new one written per "one live
+  file per slug"). `doc-drift-cleanup` and `sdlc-risk-classes` move toward
+  `PR_OPEN` on their own branch.
+- **Class:** effective class of the current branch recomputed from
+  `git diff --name-only main...HEAD` and found to be `governing` ∪
+  `trivial` — no `elevated` paths are touched yet. The reviewed
+  `terraform plan` gate previously attributed to this branch was an artifact
+  of the budget spec *declaring* infra paths it had not yet touched;
+  it applies to the build branch, not this one.
+- **Prompt:** answered the three open questions — user supplies an HCP API
+  token and I run the live stages; prod's role/user deferred to the first CI
+  apply; the two finished slugs ship first.
+- **Response:** rewrote the high-level plan to seven stages. Added stage 0
+  (ship the process work and cut a fresh branch) and stage 7 (the negative
+  test), the latter because deferring prod to CI pushes the change's core
+  security property to the very end where it is easiest to lose. Split
+  stage 4 so prod's identities are written and key-generated but not
+  applied, noting that no bootstrap deadlock results because the prod
+  Terraform apply authenticates as the existing Terraform identity rather
+  than as `PROD_DBT_USER`.
+- **Files touched:** docs/budget-models-and-envs-plan.md (deleted and
+  rewritten)
+
+
 ## 2026-09-14 — Specs signed off; high-level plan drafted
 
 - **Transition:** `SPEC_DRAFT → SPEC_APPROVED` for `budget-models-and-envs`
