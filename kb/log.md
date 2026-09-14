@@ -4,6 +4,12 @@ Newest entry first. Records additions and meaningful changes to concepts in
 this bundle. Distinct from the repo-root `log.md`, which logs the SDLC
 process itself.
 
+## 2026-09-14 — Cross-environment denial is indistinguishable from absence
+
+- Appended to `observations/snowflake-account-baseline.md`: an unauthorized
+  role gets "does not exist or not authorized" and cannot tell which, so a
+  role-isolation test needs a privileged read alongside it to mean anything.
+
 ## 2026-09-14 — CI service user key rotated; secrets placed
 
 - Added `observations/github-environments-and-secrets.md`: the three GitHub

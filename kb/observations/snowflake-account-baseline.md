@@ -88,3 +88,20 @@ Terraform-managed.
 - Tasks `run_budget_subset` / `run_budget_full`
 - Any dbt project object
 - Observability settings on schemas (LOG_LEVEL, TRACE_LEVEL, METRIC_LEVEL)
+
+## Cross-environment denial reads as "does not exist"
+
+Established 2026-09-14 by attempting `CREATE TABLE PROD_DB.BRONZE.x` as
+`PRE_PROD_DBT_ROLE`.
+
+Snowflake refuses with `002003 (02000): SQL compilation error: Database
+'PROD_DB' does not exist or not authorized.` — it will not tell an
+unauthorized role which of the two it is, deliberately, so the role cannot
+probe for the existence of objects it has no rights to.
+
+The consequence for testing: that message alone proves nothing. It is
+identical to what a typo in the database name produces. The isolation is only
+demonstrated by pairing it with a privileged read showing the object does
+exist — `SHOW SCHEMAS IN DATABASE PROD_DB` as `ACCOUNTADMIN` lists BRONZE,
+SILVER and GOLD (created 2026-09-10). Both halves together are the evidence;
+either alone is not.
