@@ -3,6 +3,28 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — Trivial changes now get a spec (governing)
+
+- **Transition:** none for a slug. Amends the process itself; the
+  `doc-drift-cleanup` slug gains a backfilled spec at `SPEC_APPROVED`.
+- **Class:** `governing` (`sdlc/**`) — edits left uncommitted alongside the
+  user's in-flight `sdlc/` work; only the backfilled `docs/` spec is
+  committed, which is `trivial`.
+- **Prompt:** asked whether trivial changes get a spec; on being told they
+  do not, directed that they should — "simple but needed."
+- **Response:** raised the contradiction with `classes.md` before editing.
+  Confirmed three things: the trivial spec is `auto` (written straight to
+  `status: approved`, no sign-off pause), trimmed in shape (intent, changes,
+  paths — no current-state survey, test plan, or out-of-scope), and
+  `doc-drift-cleanup` gets one backfilled. Updated `classes.md` (`SPEC_*`
+  for trivial: `skipped` → `auto`; removed the "trivial has no spec" special
+  case so provisional `class:` now lives in frontmatter for every class) and
+  `spec.md` (new "Every change gets one" section). Wrote the backfilled
+  spec. Also recorded that `log.md` is exempt from class derivation, per the
+  user's point that logging transcends classes.
+- **Files touched:** sdlc/classes.md, sdlc/spec.md,
+  docs/doc-drift-cleanup-spec.md (new), log.md
+
 ## 2026-09-14 — Doc drift cleanup (trivial)
 
 - **Transition:** `NEW → DISCOVERY_OPEN → BUILD_IN_PROGRESS → BUILD_COMPLETE`
