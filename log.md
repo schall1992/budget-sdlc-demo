@@ -3,6 +3,29 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — Specs signed off; high-level plan drafted
+
+- **Transition:** `SPEC_DRAFT → SPEC_APPROVED` for `budget-models-and-envs`
+  and `sdlc-risk-classes`. `budget-models-and-envs` then took the `auto`
+  transition `SPEC_APPROVED → PLAN_HL_DRAFT`. `doc-drift-cleanup` was
+  already `SPEC_APPROVED` (trivial, `auto`).
+- **Class:** `elevated` (`budget-models-and-envs`), `governing`
+  (`sdlc-risk-classes`), `trivial` (`doc-drift-cleanup`). Branch owes the
+  union of `elevated` and `governing` gates.
+- **Prompt:** sign off all outstanding specs and move on.
+- **Response:** set `status: approved` on both draft specs. Drafted the
+  high-level plan for `budget-models-and-envs` as six verified stages,
+  sequenced around the fact that the new CI flow cannot apply the
+  infrastructure it depends on — so stages 1–5 bootstrap by hand and only
+  stage 6 hands the working system to CI. Raised three open questions with
+  it: who runs the live stages, whether prod's role/user is created by hand
+  or deferred to the first CI apply, and whether the two finished slugs
+  should ship ahead of this one. `PLAN_HL_*` is `needs_confirmation` at
+  both classes, so the breakdown is held until the approach is approved.
+- **Files touched:** docs/budget-models-and-envs-spec.md,
+  docs/sdlc-risk-classes-spec.md, docs/budget-models-and-envs-plan.md (new)
+
+
 ## 2026-09-14 — Governing work committed; gate inversion closed
 
 - **Transition:** `SPEC_DRAFT` created for new slug `sdlc-risk-classes`
