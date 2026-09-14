@@ -3,6 +3,24 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — Breakdown written
+
+- **Transition:** `PLAN_HL_APPROVED → PLAN_BREAKDOWN_DRAFT` for
+  `budget-models-and-envs`. Awaiting sign-off to reach
+  `PLAN_BREAKDOWN_APPROVED`.
+- **Class:** `elevated` (provisional).
+- **Prompt:** move on.
+- **Response:** deleted and rewrote the plan with a breakdown of seventeen
+  tasks (T0–T16), each carrying tests and an explicit dependency marker.
+  Stages 0–3 are recorded as done rather than omitted, so the slug's state
+  stays derivable from the plan file alone. Stages 2 and 3 are now
+  documented as one merged stage with the reason they cannot be verified
+  separately. Two things surfaced for review rather than decided silently:
+  the spec's `env_name` variable is redundant with `env_database`, and the
+  HCP token needs rotating because it was pasted into a chat transcript.
+- **Files touched:** deleted and recreated
+  `docs/budget-models-and-envs-plan.md`.
+
 ## 2026-09-14 — Stages 2+3 complete: parameterized module on HCP state
 
 - **Transition:** none. `PLAN_HL_APPROVED → PLAN_BREAKDOWN_DRAFT` is still
