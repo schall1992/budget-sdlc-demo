@@ -1,17 +1,18 @@
 # Phase: Plan
 
-**In:** an approved spec. **Out:** `docs/<feature-slug>-plan.md`, paired
-one-to-one with that slug's spec. **Gate:** the user approves the high-level
-plan, then the breakdown.
+States `PLAN_HL_DRAFT`/`PLAN_HL_APPROVED`/`PLAN_BREAKDOWN_DRAFT`/
+`PLAN_BREAKDOWN_APPROVED` — see [states.md](states.md) for the gates between
+these. Output is `docs/<feature-slug>-plan.md`, paired one-to-one with that
+slug's spec, carrying a `status:` frontmatter line matching the current
+state.
 
 Design an implementation from the spec: inspect it, work out an approach, and
 surface every ambiguity to the user as a question — this phase is as
 collaborative as discovery.
 
 A plan has two parts: a **high-level plan** (the overall approach) and a
-**breakdown** (the concrete steps/tasks to execute it). Write and get the
-user's approval on the high-level plan *first* — don't produce the breakdown
-until the high-level approach is approved.
+**breakdown** (the concrete steps/tasks to execute it). Don't produce the
+breakdown until the high-level approach is approved.
 
 Every task in the breakdown carries two things:
 

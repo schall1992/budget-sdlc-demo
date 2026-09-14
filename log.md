@@ -3,6 +3,250 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — Waiver rule added; PR #3 waiver granted
+
+- **Transition:** none yet — `sdlc-risk-classes` + `doc-drift-cleanup`
+  remain at `PR_OPEN`, now with the evidence gate satisfied by waiver rather
+  than by a green check. `PR_OPEN → SHIPPED` still needs its
+  `needs_confirmation`.
+- **Class:** `governing` ∪ `trivial`.
+- **Prompt:** chose option 1 — waive the failing check and amend
+  `classes.md` to define waivers.
+- **Response:** added a "Waiving a check that fails independently of the
+  change" section to `classes.md`, with five conditions: the diff touches no
+  path the check exercises (the load-bearing one), the failure is
+  demonstrated to pre-date the change, the cause is recorded durably in
+  `kb/observations/`, the user grants it explicitly, and it is recorded in
+  the PR body and here. Waivers are per-PR and never standing; they excuse
+  the evidence, never the gate, and a reviewed `terraform plan` is not
+  waivable at all. Deleted and rewrote the spec rather than editing it in
+  place, per "one live file per slug", adding the waiver rule and the
+  granted waiver record for this PR. Flagged to the user beforehand that an
+  agent writing the exception that unblocks its own PR warrants their
+  review; the explicit-grant condition is the structural answer to that.
+- **Files touched:** sdlc/classes.md, docs/sdlc-risk-classes-spec.md
+  (deleted and rewritten)
+
+
+## 2026-09-14 — CI advanced one layer; OIDC found unconfigured
+
+- **Transition:** none. `sdlc-risk-classes` + `doc-drift-cleanup` stay at
+  `PR_OPEN` (PR #3); the `governing` CI-green gate is still unsatisfied.
+- **Class:** `governing` ∪ `trivial`. Unchanged — the fix touched GitHub
+  account configuration, not repo paths.
+- **Prompt:** asked what, outside Terraform, actually consumes the Snowflake
+  environment variables; then chose to set only a repo-level
+  `SNOWFLAKE_ACCOUNT` and see how far CI gets.
+- **Response:** traced consumers — only the four dbt jobs across the two
+  workflows; Terraform hardcodes org/account and `profiles.yml` sets its own
+  database/schema per target. Established that `SNOWFLAKE_ACCOUNT` does not
+  vary by environment (one account holds both databases) and is not secret,
+  while `SNOWFLAKE_DATABASE`/`SNOWFLAKE_SCHEMA` place the dbt project object
+  rather than select a build target — so environment selection currently has
+  two independent, unsynchronised sources of truth. Set the repo-level
+  secret; CI moved past the account error to a JWT rejection, showing OIDC
+  workload identity is not configured for the presented subject. This
+  contradicts a comment in `infra/service_user.tf` asserting it already is.
+  Recorded the disagreement rather than reconciling it, per content
+  discipline, and did not attempt a fix — the remedy is a Snowflake-side
+  change to a Terraform-managed user, which is `elevated` and belongs in the
+  build stages.
+- **Files touched:** kb/observations/repo-and-cicd-baseline.md
+
+
+## 2026-09-14 — CI found never-green; `governing` evidence gate unsatisfied
+
+- **Transition:** `PR_OPEN` reached for `sdlc-risk-classes` +
+  `doc-drift-cleanup` (PR #3), but `PR_OPEN → SHIPPED` is blocked — the
+  `governing` gate requires CI green and CI is red.
+- **Class:** `governing` ∪ `trivial` (effective, from the real diff).
+- **Prompt:** none — continuation of stage 0 of the approved plan.
+- **Response:** opened PR #3 and checked CI rather than asserting the work
+  was done. The dbt job failed. Checking history showed it has failed on
+  every run since the repo began (eight runs, three PRs, 2026-09-10
+  onward), always at `snow connection test` with "Account must be
+  specified": the `prod` GitHub environment has one secret and no
+  variables, so `SNOWFLAKE_ACCOUNT` is empty. Both earlier PRs were merged
+  red. The job also has no paths-filter, so a docs-only PR is gated on a
+  dbt build that cannot pass. Recorded in the CI baseline observation and
+  raised with the user rather than merging red on the very PR that
+  introduces the rule that evidence comes from outside the agent.
+- **Files touched:** kb/observations/repo-and-cicd-baseline.md
+
+
+## 2026-09-14 — High-level plan approved; process work split off to ship first
+
+- **Transition:** `PLAN_HL_DRAFT → PLAN_HL_APPROVED` for
+  `budget-models-and-envs` (old plan deleted, new one written per "one live
+  file per slug"). `doc-drift-cleanup` and `sdlc-risk-classes` move toward
+  `PR_OPEN` on their own branch.
+- **Class:** effective class of the current branch recomputed from
+  `git diff --name-only main...HEAD` and found to be `governing` ∪
+  `trivial` — no `elevated` paths are touched yet. The reviewed
+  `terraform plan` gate previously attributed to this branch was an artifact
+  of the budget spec *declaring* infra paths it had not yet touched;
+  it applies to the build branch, not this one.
+- **Prompt:** answered the three open questions — user supplies an HCP API
+  token and I run the live stages; prod's role/user deferred to the first CI
+  apply; the two finished slugs ship first.
+- **Response:** rewrote the high-level plan to seven stages. Added stage 0
+  (ship the process work and cut a fresh branch) and stage 7 (the negative
+  test), the latter because deferring prod to CI pushes the change's core
+  security property to the very end where it is easiest to lose. Split
+  stage 4 so prod's identities are written and key-generated but not
+  applied, noting that no bootstrap deadlock results because the prod
+  Terraform apply authenticates as the existing Terraform identity rather
+  than as `PROD_DBT_USER`.
+- **Files touched:** docs/budget-models-and-envs-plan.md (deleted and
+  rewritten)
+
+
+## 2026-09-14 — Specs signed off; high-level plan drafted
+
+- **Transition:** `SPEC_DRAFT → SPEC_APPROVED` for `budget-models-and-envs`
+  and `sdlc-risk-classes`. `budget-models-and-envs` then took the `auto`
+  transition `SPEC_APPROVED → PLAN_HL_DRAFT`. `doc-drift-cleanup` was
+  already `SPEC_APPROVED` (trivial, `auto`).
+- **Class:** `elevated` (`budget-models-and-envs`), `governing`
+  (`sdlc-risk-classes`), `trivial` (`doc-drift-cleanup`). Branch owes the
+  union of `elevated` and `governing` gates.
+- **Prompt:** sign off all outstanding specs and move on.
+- **Response:** set `status: approved` on both draft specs. Drafted the
+  high-level plan for `budget-models-and-envs` as six verified stages,
+  sequenced around the fact that the new CI flow cannot apply the
+  infrastructure it depends on — so stages 1–5 bootstrap by hand and only
+  stage 6 hands the working system to CI. Raised three open questions with
+  it: who runs the live stages, whether prod's role/user is created by hand
+  or deferred to the first CI apply, and whether the two finished slugs
+  should ship ahead of this one. `PLAN_HL_*` is `needs_confirmation` at
+  both classes, so the breakdown is held until the approach is approved.
+- **Files touched:** docs/budget-models-and-envs-spec.md,
+  docs/sdlc-risk-classes-spec.md, docs/budget-models-and-envs-plan.md (new)
+
+
+## 2026-09-14 — Governing work committed; gate inversion closed
+
+- **Transition:** `SPEC_DRAFT` created for new slug `sdlc-risk-classes`
+  (retroactively — see the spec's "Known deviation"). No change to
+  `budget-models-and-envs`, still `SPEC_DRAFT`.
+- **Class:** `governing` (`sdlc/**`, `CLAUDE.md`). The branch now spans
+  `governing` and `elevated`, so under the new union rule it owes both
+  sets of gates, including the reviewed `terraform plan`.
+- **Prompt:** asked why the governing work was not being committed.
+- **Response:** no good reason — it began as a valid call to keep
+  `doc-drift-cleanup` trivial, then persisted by inertia after it stopped
+  applying. Two costs found: `sdlc/states.md` and `sdlc/classes.md` were
+  untracked while four committed files already linked to them (dangling
+  links in the onboarding docs), and untracked files have no history to
+  recover. Also found that precedence picked the wrong gate when `elevated`
+  and `governing` mix, since `governing` outranks `elevated` but requires
+  weaker evidence. Fixed by making gates accumulate as a union rather than
+  substitute. Committed the governing work on this branch at the user's
+  direction, wrote its spec, and — the branch already being `governing` —
+  closed the workflow-filename staleness in `classes.md` rather than
+  leaving it as follow-up.
+- **Files touched:** sdlc/classes.md, CLAUDE.md, sdlc/{build,discovery,
+  plan,pull-request,spec}.md, sdlc/states.md,
+  docs/sdlc-risk-classes-spec.md (new),
+  docs/budget-models-and-envs-spec.md (follow-up section → dependency)
+
+## 2026-09-14 — Spec revised: remote state, two High findings closed
+
+- **Transition:** `SPEC_DRAFT → SPEC_DRAFT` (old draft deleted, new one
+  written). Still awaiting approval.
+- **Class:** `elevated`.
+- **Prompt:** returned to the `budget-models-and-envs` branch to finish the
+  spec.
+- **Response:** flagged that six log entries are stranded on the unmerged
+  `doc-drift-cleanup` branch. Resolved both High findings from the earlier
+  review: state moves out of the repo into HCP Terraform (free tier, one
+  workspace per environment, local execution mode, `TF_API_TOKEN` in the
+  `infra` environment), which also eliminates the commit-state-back step and
+  the force-push rollback footgun — both dropped from the accepted-risk
+  list. The stale `classes.md` filename references are recorded as a
+  `governing` follow-up rather than fixed here, to avoid bumping this
+  change's class. Also dropped the `-state=` flag in favour of
+  `TF_WORKSPACE`, and stated that `PROD_DBT_USER`'s key is never stored
+  locally.
+- **Files touched:** docs/budget-models-and-envs-spec.md (deleted and
+  rewritten)
+## 2026-09-14 — Trivial changes now get a spec (governing)
+
+- **Transition:** none for a slug. Amends the process itself; the
+  `doc-drift-cleanup` slug gains a backfilled spec at `SPEC_APPROVED`.
+- **Class:** `governing` (`sdlc/**`) — edits left uncommitted alongside the
+  user's in-flight `sdlc/` work; only the backfilled `docs/` spec is
+  committed, which is `trivial`.
+- **Prompt:** asked whether trivial changes get a spec; on being told they
+  do not, directed that they should — "simple but needed."
+- **Response:** raised the contradiction with `classes.md` before editing.
+  Confirmed three things: the trivial spec is `auto` (written straight to
+  `status: approved`, no sign-off pause), trimmed in shape (intent, changes,
+  paths — no current-state survey, test plan, or out-of-scope), and
+  `doc-drift-cleanup` gets one backfilled. Updated `classes.md` (`SPEC_*`
+  for trivial: `skipped` → `auto`; removed the "trivial has no spec" special
+  case so provisional `class:` now lives in frontmatter for every class) and
+  `spec.md` (new "Every change gets one" section). Wrote the backfilled
+  spec. Also recorded that `log.md` is exempt from class derivation, per the
+  user's point that logging transcends classes.
+- **Files touched:** sdlc/classes.md, sdlc/spec.md,
+  docs/doc-drift-cleanup-spec.md (new), log.md
+
+## 2026-09-14 — Doc drift cleanup (trivial)
+
+- **Transition:** `NEW → DISCOVERY_OPEN → BUILD_IN_PROGRESS → BUILD_COMPLETE`
+  for new slug `doc-drift-cleanup`. Per `sdlc/classes.md`, a `trivial` change
+  skips `SPEC_*` and `PLAN_*` entirely and needs no evidence for
+  `BUILD_COMPLETE`.
+- **Class:** `trivial` — touches only `README.md`, `index.md`, `kb/**`.
+- **Prompt:** asked how current repo state is documented for a fresh agent
+  session; then asked to fix the resulting drift findings as a new trivial
+  change, and to write the onboarding chain table into `README.md` this
+  session.
+- **Response:** reported the seven-layer onboarding chain and five drift
+  findings. Cut branch `doc-drift-cleanup` off `main`. Fixed all five:
+  README no longer instructs running the unrunnable `dbt/setup/` scripts and
+  now carries the onboarding chain table and a corrected CI description;
+  `index.md` gained the missing `infra/` row and corrected `docs/`, `dbt/`,
+  `.github/`, and `refs.yaml` rows; added a durable repo/CI-CD baseline
+  observation so current state no longer lives only in an archivable spec.
+  Flagged that the working tree also holds uncommitted `governing`-class
+  work (`sdlc/**`, `CLAUDE.md`) and the `elevated` spec — left untouched and
+  uncommitted so this change stays `trivial`.
+- **Files touched:** README.md, index.md,
+  kb/observations/repo-and-cicd-baseline.md (new),
+  kb/observations/index.md, kb/log.md
+
+## 2026-09-14 — Workflows reclassified to elevated
+
+- **Transition:** none (process definition change)
+- **Class:** governing
+- **Prompt:** move `.github/workflows/**` from the governing class to elevated.
+- **Response:** reclassified. `governing` is now strictly the process definition — `sdlc/**` and `CLAUDE.md`. The workflows sit with the infrastructure they deploy, since in this repo CI is the deployment mechanism and moves with `infra/` rather than with the process. Reclassified the in-flight budget-models-and-envs spec from governing to elevated as a result; its gates are unchanged either way.
+- **Files touched:** sdlc/classes.md, docs/budget-models-and-envs-spec.md (class frontmatter)
+
+## 2026-09-14 — Risk classes added to the SDLC
+
+- **Transition:** none (process definition change, not a slug moving state)
+- **Class:** governing
+- **Prompt:** after reviewing a New Stack article arguing an AI-native SDLC should not be one process for every change, asked to propose risk-based classification and growing autonomy, then to implement the classification half only.
+- **Response:** added a risk class layer. Class is derived from paths touched, highest-class-wins, determined provisionally at SPEC_DRAFT and re-checked against the real diff at PR_OPEN, where a higher effective class bumps the change back to re-walk skipped gates. Four classes: trivial (docs/kb), standard (dbt models/macros/tests), elevated (infra, dbt setup/schedules/profiles), governing (sdlc, CLAUDE.md, workflows). Removed the "skip the SDLC" human-initiated edge — shorter paths now come from classification, not from asking. BUILD_COMPLETE now requires CI evidence rather than the agent's own test run. Growing autonomy (per-class gate settings that relax on a clean track record) was proposed but deliberately deferred.
+- **Files touched:** sdlc/classes.md (created), sdlc/states.md, sdlc/build.md, CLAUDE.md, index.md, docs/budget-models-and-envs-spec.md (class frontmatter added)
+
+## 2026-09-14 — Spec feedback: dedupe infra via one module + tfvars
+
+- **Transition:** SPEC_DRAFT → SPEC_DRAFT (old draft deleted, new one written)
+- **Prompt:** reduce duplicate infra code by using environment variable files applied to one set of infrastructure, instead of three separate Terraform root modules.
+- **Response:** confirmed approach via questions (separate state file per env via backend/-state flag; fold shared/pre_prod/prod into one module; env differences expressed as boolean/count vars). Rewrote docs/budget-models-and-envs-spec.md: infra/ is now a single parameterized module with one .tfvars file and one state file per environment (shared, pre_prod, prod), applied via `-var-file`/`-state`; grants/resources gated by boolean vars (e.g. `grant_create_schema`) instead of being copy-pasted per environment root. Workflow and test-plan sections updated to match.
+- **Files touched:** docs/budget-models-and-envs-spec.md (deleted and rewritten)
+
+## 2026-09-14 — Spec review resumed
+
+- **Transition:** none (spec had no status frontmatter; resolved to SPEC_DRAFT, added `status: draft`)
+- **Prompt:** asked to review the budget-models-and-envs spec and prepare to continue.
+- **Response:** reviewed spec content; flagged missing status frontmatter; user chose to treat it as still-draft and give feedback before approving. Frontmatter added.
+- **Files touched:** docs/budget-models-and-envs-spec.md (added frontmatter)
+
 ## 2026-09-11 — Pull request
 
 - **Prompt:** PR merged for budget sdlc demo.
@@ -374,3 +618,24 @@ Newest entry first. Records every interaction in the SDLC process (see
 **Prompt:** "merge it!" — user directed merging PR #1 despite the spec's original intent not to merge as part of proving the pipeline (their explicit call to make).
 **Response:** Attempted to merge via `gh pr merge`; blocked by the environment's own permission classifier as too high-impact to automate, so surfaced this to the user and asked them to merge manually. User merged PR #1 (commit `47b327f`) themselves and confirmed. Verified the resulting `pr_merged.yml` CI run: `terraform-apply` succeeded with "0 added, 0 changed, 0 destroyed" (a genuine no-op, as expected since the resource was already fully imported); the `Run on Accepted PR` dbt job failed on the same pre-existing, out-of-scope `SNOWFLAKE_ACCOUNT` secret issue noted during Build. Per the shipping gate in `sdlc/pull-request.md`, moved `docs/init-snowflake-infra-spec.md` and `docs/init-snowflake-infra-plan.md` to `docs/prod/` directly on `main`.
 **Files touched:** `docs/prod/init-snowflake-infra-spec.md` (moved), `docs/prod/init-snowflake-infra-plan.md` (moved), `log.md` (this entry)
+
+## 2026-09-11 (Discovery → Spec)
+
+**Phase:** Discovery, then Spec
+**Prompt:** New work: build models on the raw transactional data; local dev via `pre_prod.<schema_name>_<username>` developer schemas; separate pre_prod and prod dbt roles owning the objects dbt creates; pre_prod private key stored locally for local runs; PR CI job building into pre_prod schemas; merge job building into prod schemas; no scheduled jobs. User asked what questions I had about designing the flow.
+**Response:** Read the repo and `kb/observations/` for current state, then ran Discovery as three rounds of questions. Settled: branch `budget-models-and-envs` (cut off `main`); scope is the flow only, proven with one thin staging model, with real modeling deferred to its own slug; dbt Projects on Snowflake used everywhere including local (not dbt Core); two service users, one per environment, each with its own key pair; Snowflake `env.yml`/ENV_VARS as the schema-suffix mechanism; per-PR CI schemas with teardown on close rather than shared pre_prod schemas; dbt roles take OWNERSHIP of schemas while `ACCOUNTADMIN` keeps the databases; key-pair auth for both CI jobs via environment-scoped secrets rather than OIDC; I provision against Snowflake during Build; old `dbt/setup/*.sql` bootstrap scripts deleted. Researched the Snowflake docs mid-discovery and surfaced three constraints that shaped the design: the two-role (calling vs. profile) model, shell env-var pass-through being limited to `DBT_`-prefixed names, and deploy-time compilation not seeing env vars (so the macro needs a default or `snow dbt deploy` fails). Also noted `snow` is not installed locally. Wrote the spec; awaiting approval before planning.
+**Files touched:** `docs/budget-models-and-envs-spec.md` (created), `log.md` (this entry)
+
+## 2026-09-11 (Discovery reopened → Spec replaced)
+
+**Phase:** Discovery, then Spec
+**Prompt:** Approved the first spec, then added a new branching model: create a long-lived `dev` branch; feature branches always cut from `main` (the prod branch); PR into `dev` runs CI; merging to `dev` builds the PRE_PROD schemas; a second PR from the same feature branch into `main` runs no CI; merging to `main` runs the prod build as before.
+**Response:** Reopened Discovery since this changes the promotion shape. Flagged the inherent limitation that `dev` validates the feature integrated with other in-flight work while `main` ships the feature alone, so a green `dev` build isn't proof the `main` merge is green — user accepted. Settled: `dev` reset to `main` manually by the user, no automation; `main` PR runs nothing automated but branch protection requires a review approval; Terraform applies pre_prod infra on `dev` merge and prod infra on `main` merge, which forces `infra/` to split from one root module into three (`shared`, `pre_prod`, `prod`) with separate state and a `terraform state mv` migration of the existing committed state; shared objects (warehouse, TF service user) live in `infra/shared/` applied on `main` merge, with each environment root owning all grants to its own role; one ACCOUNTADMIN Terraform user retained, with the resulting `dev`-branch escalation path explicitly accepted. Also raised that force-pushing a `dev` reset fires the push workflow and can roll back unmerged pre_prod infra. Decided independently that the PR-into-`dev` job must plan all three Terraform roots, since it is the flow's only gate and a prod infra change would otherwise apply unpreviewed; and split the Terraform credential into its own `infra` GitHub environment so the prod dbt key stays unreachable from `dev`-triggered jobs. Deleted the original spec and wrote a new self-contained one per "one live file per slug"; awaiting approval before planning.
+**Files touched:** `docs/budget-models-and-envs-spec.md` (deleted and replaced), `log.md` (this entry)
+
+## 2026-09-11 (Spec replaced again)
+
+**Phase:** Spec
+**Prompt:** Corrected that all dbt project objects should share the name `budget_dbt`, since the schemas are what differ. Asked what "its own `infra` GitHub environment" meant, and — when offered a `DBT` schema to hold the objects — questioned why that schema exists at all rather than using bronze/silver/gold.
+**Response:** Explained GitHub Environments: named secret buckets a job opts into via `environment:`, where any job declaring one can read every secret it holds — hence giving the ACCOUNTADMIN Terraform credential its own `infra` environment, so the Terraform job running on dev PRs can't reach the prod dbt key. User additionally approved a deployment branch rule restricting the `prod` environment to `main`. On the schema question: dropped the invented `DBT` schema entirely and placed the `budget_dbt` object in each context's bronze schema, which resolves the object-naming and code-isolation concerns together — one name everywhere, while the schema suffix isolates deployed code as well as output, and a PR's object is removed with its schema. Flagged the one consequence: `snow dbt deploy` needs its target schema to pre-exist, so the PR and local flows each need a `CREATE SCHEMA IF NOT EXISTS` step. Deleted and rewrote the spec per "one live file per slug"; still awaiting approval before planning.
+**Files touched:** `docs/budget-models-and-envs-spec.md` (deleted and replaced), `log.md` (this entry)
