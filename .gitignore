@@ -4,4 +4,8 @@ dbt/logs/
 .vscode/settings.json
 
 infra/.terraform/
-infra/terraform.tfstate.backup
+# State lives in HCP Terraform, never in git. Any local .tfstate is a
+# leftover or a scratch copy — committing one reintroduces the two-writer
+# race that moving to HCP removed.
+infra/*.tfstate
+infra/*.tfstate.*

@@ -1,0 +1,120 @@
+# The only gate in the flow. The PR into `main` runs nothing, so a prod infra
+# change that is not previewed here applies on merge having never been seen —
+# which is why this plans all three workspaces, not just pre_prod.
+name: PR to dev
+run-name: PR #${{ github.event.pull_request.number }} to dev by ${{ github.actor }}
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            infra:
+              - 'infra/**'
+
+  terraform-plan:
+    name: Terraform plan (all three workspaces)
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    environment: infra
+    env:
+      SNOWFLAKE_ORGANIZATION_NAME: epgqqsk
+      SNOWFLAKE_ACCOUNT_NAME: kn46620
+      SNOWFLAKE_USER: GITHUB_ACTIONS_SERVICE_USER
+      SNOWFLAKE_AUTHENTICATOR: SNOWFLAKE_JWT
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_RAW }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.16"
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      # The cloud block selects by tag, so TF_WORKSPACE picks the target and a
+      # single init serves all three.
+      - name: Terraform init
+        working-directory: infra
+        env:
+          TF_WORKSPACE: budget-shared
+        run: terraform init -input=false
+
+      - name: Plan shared
+        working-directory: infra
+        env:
+          TF_WORKSPACE: budget-shared
+        run: terraform plan -input=false -no-color -var-file=envs/shared.tfvars
+
+      - name: Plan pre_prod
+        working-directory: infra
+        env:
+          TF_WORKSPACE: budget-pre-prod
+        run: terraform plan -input=false -no-color -var-file=envs/pre_prod.tfvars
+
+      - name: Plan prod
+        working-directory: infra
+        env:
+          TF_WORKSPACE: budget-prod
+        run: terraform plan -input=false -no-color -var-file=envs/prod.tfvars
+
+  dbt-build:
+    name: dbt build into per-PR schemas
+    runs-on: ubuntu-latest
+    environment: pre_prod
+    env:
+      SNOWFLAKE_CLI_FEATURES_ENABLE_DBT: true
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: PRE_PROD_DBT_USER
+      SNOWFLAKE_ROLE: PRE_PROD_DBT_ROLE
+      SNOWFLAKE_WAREHOUSE: ANALYSIS_WH
+      SNOWFLAKE_DATABASE: PRE_PROD_DB
+      SNOWFLAKE_AUTHENTICATOR: SNOWFLAKE_JWT
+      # Lowercase; generate_schema_name uppercases the whole schema name.
+      SUFFIX: pr_${{ github.event.pull_request.number }}
+      BRONZE: BRONZE_PR_${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Kept in RUNNER_TEMP rather than the workspace so it cannot be picked up
+      # by anything that archives or commits the checkout.
+      - name: Write private key
+        env:
+          KEY: ${{ secrets.PRE_PROD_DBT_PRIVATE_KEY }}
+        run: |
+          umask 077
+          printf '%s\n' "$KEY" > "$RUNNER_TEMP/pre_prod_dbt_user.p8"
+          echo "SNOWFLAKE_PRIVATE_KEY_FILE=$RUNNER_TEMP/pre_prod_dbt_user.p8" >> "$GITHUB_ENV"
+
+      - uses: snowflakedb/snowflake-cli-action@v2.0
+
+      # `snow dbt deploy` will not create its target schema, and it runs before
+      # dbt would. Terraform owns BRONZE/SILVER/GOLD but not the per-PR ones.
+      - name: Create PR bronze schema
+        run: snow sql -x -q "CREATE SCHEMA IF NOT EXISTS PRE_PROD_DB.${BRONZE}"
+
+      # Connection flags must precede the project name, or the CLI forwards
+      # them to dbt and dbt rejects them.
+      - name: Deploy dbt project object
+        run: snow dbt deploy -x --schema "$BRONZE" budget_dbt --source ./dbt --dbt-version 1.10.15 --force
+
+      - name: Build and test
+        run: |
+          snow dbt execute -x --schema "$BRONZE" \
+            --env-vars "{\"DBT_DEV_SCHEMA_SUFFIX\":\"${SUFFIX}\"}" \
+            budget_dbt build --target dev

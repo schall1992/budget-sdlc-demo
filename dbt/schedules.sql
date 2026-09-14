@@ -1,24 +1,24 @@
--- To avoid issues with CREATE OR ALTER, suspend all of the tasks from root to child
--- ALTER TASK IF EXISTS ensures this file can execute on first run each time a task is added
-ALTER TASK IF EXISTS run_budget_subset SUSPEND;
-ALTER TASK IF EXISTS run_budget_full SUSPEND;
+-- Scheduled orchestration for the prod dbt project object.
+--
+-- NOT INVOKED BY ANY WORKFLOW. Nothing in CI creates, resumes, or schedules a
+-- task; this file exists so the scheduling path is written down and ready, and
+-- is run by hand if and when that is wanted. Run it as a role that can create
+-- tasks in PROD_DB.BRONZE — PROD_DBT_ROLE owns the schema but is not granted
+-- EXECUTE TASK, so that grant is a prerequisite.
+--
+-- The template's two-task DAG (a fast subset, then a full build) collapsed to
+-- one task: there is a single model today, so a "subset" would select the same
+-- thing the full build does. Split it again when the model count justifies it.
 
--- Builds a subset of the models and runs tests. This is an example of a subset that needs
--- to be available early for business needs — update the --select list to match real models.
-CREATE OR ALTER TASK run_budget_subset
-  WAREHOUSE = budget_dbt_wh
+-- ALTER TASK IF EXISTS so this file is re-runnable, including on first run.
+ALTER TASK IF EXISTS PROD_DB.BRONZE.run_budget_full SUSPEND;
+
+-- Builds all models and runs tests in DAG order, failing early if any test fails.
+CREATE OR ALTER TASK PROD_DB.BRONZE.run_budget_full
+  WAREHOUSE = ANALYSIS_WH
   SCHEDULE = '12 hours'
   AS
-      execute dbt project budget_dbt_object_gh_action args='build --select raw_customers stg_customers customers --target prod';
+      EXECUTE DBT PROJECT PROD_DB.BRONZE.budget_dbt args='build --target prod';
 
--- Builds all models and runs tests in DAG order, failing early if any test fails
-CREATE OR ALTER TASK run_budget_full
-  WAREHOUSE = budget_dbt_wh
-  AFTER run_budget_subset
-  AS
-      execute dbt project budget_dbt_object_gh_action args='build --target prod';
-
--- When a task is first created or if an existing task it paused, it MUST BE RESUMED to be activated
--- The tasks must be enabled in REVERSE ORDER from child to root
-ALTER TASK IF EXISTS run_budget_full RESUME;
-ALTER TASK IF EXISTS run_budget_subset RESUME;
+-- A newly created or suspended task must be resumed to become active.
+ALTER TASK IF EXISTS PROD_DB.BRONZE.run_budget_full RESUME;

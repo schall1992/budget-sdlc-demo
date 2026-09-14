@@ -6,13 +6,22 @@ would otherwise have to rediscover.
 - [snowflake-account-baseline.md](snowflake-account-baseline.md) — project
   infrastructure now exists: ANALYSIS_WH, PRE_PROD_DB (bronze/silver/gold),
   PROD_DB (bronze/silver/gold), all Terraform-managed. Source data in
-  SOURCE_DB.RAW.TRANSACTIONS.
+  SOURCE_DB.RAW.TRANSACTIONS. Also: why neither `connections.toml` profile
+  works for the Terraform provider, and the key pair added for it.
 - [dbt-scaffold-drift.md](dbt-scaffold-drift.md) — template placeholders
   and stale tasty-bytes references. The raw-data-location contradiction is
   resolved (no raw schema; SOURCE_DB is authoritative).
 - [repo-and-cicd-baseline.md](repo-and-cicd-baseline.md) — the repo's own
   shape: single Terraform root with committed state, `main`-only branching,
   the two workflows, and the two different CI auth mechanisms.
+- [hcp-terraform-backend.md](hcp-terraform-backend.md) — the remote state
+  backend replacing the committed state file: HCP org `osusam28-main`, three
+  `local`-execution workspaces tagged `budget`, and where the API token
+  lives.
+- [github-environments-and-secrets.md](github-environments-and-secrets.md) —
+  the `infra`/`pre_prod`/`prod` environments, which credential lives in each,
+  the `main`-only restriction on `prod`, and the CI service user key
+  rotation. The only record of secrets GitHub will not read back.
 - [github-actions-service-user-bootstrap.md](github-actions-service-user-bootstrap.md)
   — `github_actions_service_user` was hand-created via Cortex ahead of
   Terraform, with both OIDC and key-pair auth; imported into Terraform

@@ -1,8 +1,8 @@
 ---
-status: hl_approved
+status: breakdown_draft
 ---
 
-# Plan: budget-models-and-envs (high-level)
+# Plan: budget-models-and-envs
 
 ## The core problem: the flow cannot validate itself into existence
 
@@ -71,21 +71,19 @@ backend is a bootstrap paradox. Recorded as a deliberate manual step.
 
 *Verified by:* all three workspaces reachable with the supplied token.
 
-### Stage 2 — Refactor `infra/` to the parameterized module
+### Stages 2+3 — Parameterized module, on HCP state
 
-Single module, boolean-gated resources (`create_shared`, `create_env`,
-`env_name`, `grant_create_schema`), three `.tfvars` files. No new Snowflake
-resources yet — this stage is pure restructuring of what already exists, so
-the plan output is the proof.
+Merged into one stage. They cannot be verified separately: switching to
+`count`/`for_each` changes resource *addresses*, so the zero-diff plan that
+would prove stage 2 is only reachable after stage 3 has re-addressed the
+resources in state. Attempting stage 2 alone would produce a plan proposing
+to destroy and recreate everything — indistinguishable from a real defect.
 
-*Verified by:* each workspace plans zero changes against the existing
-account.
-
-### Stage 3 — Migrate state to HCP
-
-`state push` the committed state into `budget-shared`, then `state mv` the
-environment resources into their own workspaces. Delete
-`infra/terraform.tfstate*` and gitignore `*.tfstate*`.
+Single module, boolean-gated resources, three `.tfvars` files, no new
+Snowflake resources. Then `state push` into `budget-shared`, `state mv` the
+environment resources into their own workspaces, `state rm` each
+workspace's non-owned resources, delete the committed state file and
+gitignore `infra/*.tfstate*`.
 
 *Verified by:* three consecutive zero-diff plans, and no `.tfstate` in
 `git ls-files`. **This is the rollback point** — the committed state file is
@@ -111,7 +109,7 @@ Terraform identity, not as `PROD_DBT_USER`. Only the prod dbt job uses that
 user, and it runs after the apply that creates it.
 
 *Verified by:* `snow connection test` succeeds for `budget_pre_prod`; the
-prod workspace plans exactly the four expected additions and nothing else.
+prod workspace plans exactly the expected additions and nothing else.
 
 ### Stage 5 — dbt: suffix mechanism and the model
 
@@ -154,3 +152,175 @@ easiest to forget.
   intermediate state. It is also where this slug's `elevated` gates bite:
   the reviewed `terraform plan` and `needs_confirmation` on both
   `BUILD_COMPLETE` and `PR_OPEN → SHIPPED`.
+- **A second local Terraform credential exists.** The provider supports
+  neither authenticator in `connections.toml`, so `SHALL` was given an RSA
+  key pair to run stages 2–5. It grants no privilege `SHALL` did not already
+  hold, and is not Terraform-managed — it is the credential Terraform
+  authenticates with, so managing it would be circular. See
+  `kb/observations/snowflake-account-baseline.md`.
+
+---
+
+# Breakdown
+
+Tasks carry `depends on:` or `independent` — Build reads nothing else to
+decide what may run in parallel. Stages 0–3 ran ahead of this breakdown
+(they were environment setup rather than code) and are recorded here as
+done so the slug's state stays derivable from this file.
+
+## Stage 0–3 (complete)
+
+**T0 — Ship `doc-drift-cleanup` + `sdlc-risk-classes`.** `independent`.
+*Status:* done. Merged to `main`; one CI check waived per the rule added to
+`sdlc/classes.md`.
+
+**T1 — Stand up the HCP organization and three workspaces.**
+depends on: T0. *Status:* done. `osusam28-main`, all three in local
+execution mode, tagged `budget`.
+
+**T2 — Parameterize `infra/` and migrate state to HCP.** depends on: T1.
+*Status:* done, commit `224d401`. Three zero-diff plans; no tfstate tracked.
+
+## Stage 4 — Identities
+
+**T3 — Write the role, user, and grant resources.** depends on: T2.
+
+Add to the module, all gated on `create_env`: a `snowflake_account_role`, a
+`snowflake_service_user` with `rsa_public_key`, and the grants from the
+spec's Grants section — warehouse usage, database usage, schema ownership,
+`SOURCE_DB` read, and `CREATE SCHEMA` gated on a new `grant_create_schema`
+variable. Also grant each role to `SYSADMIN`. New variables:
+`grant_create_schema` (bool), `dbt_role_name`, `dbt_user_name`,
+`dbt_user_rsa_public_key`, `source_database`.
+
+Note a deviation from the spec: it names an `env_name` variable, but
+`env_database` already carries that information, so role/user names come
+from their own variables rather than being derived from a separate
+`env_name`. Flag at review rather than silently adding a third spelling of
+the same fact.
+
+*Tests:* `terraform validate`; `plan` on `budget-shared` still zero-diff
+(proving the new resources are correctly gated off there).
+
+**T4 — Generate the pre-prod key pair.** depends on: T3.
+
+Private key to `~/.snowflake/keys/pre_prod_dbt_user.p8` at mode `600`,
+public half into `infra/envs/pre_prod.tfvars`.
+
+*Tests:* the private key is mode `600`; `git status` shows no key file.
+
+**T5 — Apply the pre-prod workspace.** depends on: T4.
+
+*Tests:* apply succeeds; a second `plan` reports zero changes; `SHOW GRANTS
+TO ROLE PRE_PROD_DBT_ROLE` matches the spec's list exactly — no more, no
+less.
+
+**T6 — Add the `budget_pre_prod` connection.** depends on: T5.
+
+Entry in `~/.snowflake/connections.toml`. Note that the file's existing
+top-level `default_connection_name` key is what makes the Terraform
+provider unable to read it — do not "fix" that by removing the key, which
+would break the CLI.
+
+*Tests:* `snow connection test -c budget_pre_prod` succeeds and reports
+role `PRE_PROD_DBT_ROLE`.
+
+**T7 — Generate the prod key pair; write prod config without applying.**
+depends on: T3.
+
+Public half into `infra/envs/prod.tfvars`; private half piped straight into
+the `PROD_DBT_PRIVATE_KEY` secret in the `prod` GitHub environment, never
+written to disk.
+
+*Tests:* `plan` on `budget-prod` shows exactly the expected additions and
+zero changes to existing resources — and is **not** applied. `gh secret
+list --env prod` shows the secret.
+
+## Stage 5 — dbt
+
+**T8 — Suffix mechanism.** depends on: T6.
+
+`macros/generate_schema_name.sql` reading
+`env_var('DBT_DEV_SCHEMA_SUFFIX', '')`, an `env.yml` declaring the default
+empty value, and `dev`/`prod` targets in `profiles.yml`.
+
+*Tests:* `snow dbt deploy` compiles with no suffix set — this is the
+load-bearing case, since deploy-time compilation cannot see environment
+variables and fails without the macro default.
+
+**T9 — The staging model.** depends on: T8.
+
+`models/staging/stg_transactions.sql` as a view, plus `schema.yml` with the
+not-null tests and `test_is_positive_amount`.
+
+*Tests:* compiles; the currency-to-number cast is checked against real
+values, not just non-null — a cast that silently yields `NULL` for
+`$1,234.56` would pass a not-null test on the source column while producing
+a useless model.
+
+**T10 — Prove the local context end to end.** depends on: T9.
+
+`CREATE SCHEMA IF NOT EXISTS PRE_PROD_DB.BRONZE_SHALL`, deploy, then
+`build --target dev` with `DBT_DEV_SCHEMA_SUFFIX=shall`.
+
+*Tests:* spec test-plan item 4 — `PRE_PROD_DB.BRONZE_SHALL.STG_TRANSACTIONS`
+exists, row count matches the 1,738 source rows, and all tests pass.
+
+## Stage 6 — Branching, workflows, repo configuration
+
+**T11 — Create the `dev` branch.** depends on: T2.
+
+**T12 — GitHub environments and secrets.** depends on: T7.
+
+Create `infra` (holding `SNOWFLAKE_PRIVATE_KEY_RAW` and `TF_API_TOKEN`) and
+`pre_prod` (holding `PRE_PROD_DBT_PRIVATE_KEY`); add the `main` deployment
+branch rule to `prod`. Rotate the HCP token as part of this — the one used
+for stages 1–3 was pasted into a chat transcript.
+
+*Tests:* `gh api` shows three environments with the expected secret names
+and the `prod` branch policy; the rotated token still authenticates.
+
+**T13 — Write the four workflows and delete what they replace.**
+depends on: T10, T12.
+
+`pr_to_dev.yml`, `dev_merged.yml`, `main_merged.yml`, `pr_closed.yml`;
+delete `incoming_pr.yml`, `pr_merged.yml`, and `dbt/setup/`; fix
+`schedules.sql`. No job commits to the repo.
+
+This also retires the broken OIDC dbt job — the one the stage-0 waiver was
+granted against. The waiver was per-PR, so this task is what stops the next
+PR being red for the same reason.
+
+*Tests:* spec test-plan item 2 — `grep` finds no `git push`/`git commit` in
+any workflow. Each workflow parses (`actionlint` or `gh workflow view`).
+
+**T14 — Branch protection on `main`.** depends on: T11.
+
+Require one review approval, no status checks.
+
+*Tests:* a direct push to `main` is rejected.
+
+**T15 — Prove the CI flow end to end.** depends on: T13, T14.
+
+Spec test-plan items 6–10, in order: PR into `dev` builds `BRONZE_PR_<n>`
+with a zero-diff pre_prod plan; merge builds `PRE_PROD_DB.BRONZE`; closing
+the PR drops the `PR_<n>` schemas and the dbt project object inside them; a
+PR into `main` triggers no workflow; merging it applies shared then prod and
+builds `PROD_DB.BRONZE`.
+
+The zero-diff pre_prod plan on a branch cut from `main` is the specific
+proof that state is no longer branch-dependent — the problem committed
+state could not solve. It is the one item here that must not be waved
+through as "CI went green."
+
+## Stage 7 — The negative test
+
+**T16 — Prove the roles cannot cross.** depends on: T15.
+
+As `PRE_PROD_DBT_ROLE`, attempt `CREATE TABLE` in `PROD_DB.BRONZE`; as
+`PROD_DBT_ROLE`, attempt the same in `PRE_PROD_DB.BRONZE`.
+
+*Tests:* both are denied. A test that can only fail by *not* erroring needs
+the error text checked — an authorization denial, not a "database does not
+exist" or a connection failure, either of which would pass a naive
+"it threw" assertion while proving nothing.
