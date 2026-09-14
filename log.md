@@ -3,6 +3,33 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — Stages 2+3 complete: parameterized module on HCP state
+
+- **Transition:** none. `PLAN_HL_APPROVED → PLAN_BREAKDOWN_DRAFT` is still
+  outstanding for `budget-models-and-envs`.
+- **Class:** `elevated` (provisional) — touches `infra/**`.
+- **Prompt:** approve a Bash permission rule for `terraform state push`/
+  `state mv`/`state rm`, then continue.
+- **Response:** the state surgery completed — one committed state file
+  split across the three HCP workspaces, with `state mv` to re-address
+  resources for the new `count`/`for_each` forms and `state rm` to drop
+  each workspace's non-owned resources. Verification then blocked: the
+  provider had no credential, because it supports neither of the
+  authenticators in `connections.toml` and cannot parse that file at all.
+  Asked which credential to create; user chose a key pair on `SHALL`.
+  With that in place all three workspaces planned zero-diff — the proof
+  stages 2+3 were defined by. The committed state file is now untracked
+  and `infra/*.tfstate*` gitignored.
+- **Note carried forward:** the CI waiver granted on PR #3 was per-PR, so
+  the next PR hits the same red dbt check unless stage 6 fixes it first.
+- **Files touched:** created `infra/variables.tf`, `infra/shared.tf`,
+  `infra/environment.tf`, `infra/envs/{shared,pre_prod,prod}.tfvars`;
+  deleted `infra/objects.tf`, `infra/service_user.tf`,
+  `infra/terraform.tfstate`; edited `infra/versions.tf`, `.gitignore`,
+  `kb/observations/snowflake-account-baseline.md`,
+  `kb/observations/repo-and-cicd-baseline.md`,
+  `kb/observations/index.md`, `kb/log.md`.
+
 ## 2026-09-14 — Stage 1 complete: HCP backend stood up
 
 - **Transition:** `PLAN_HL_APPROVED → PLAN_BREAKDOWN_DRAFT` is still

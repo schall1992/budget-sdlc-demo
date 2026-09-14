@@ -24,11 +24,17 @@ with it.
 
 One root module at `infra/` — `provider.tf`, `versions.tf`, `objects.tf`,
 `service_user.tf` — with a **single committed state file**
-(`infra/terraform.tfstate`). Nine resources. `.terraform/` and
+(`infra/terraform.tfstate`). Ten resources. `.terraform/` and
 `terraform.tfstate.backup` are gitignored; the state file itself is
 deliberately committed and written back by CI.
 
 Snowflake provider `snowflakedb/snowflake` v2.20.0.
+
+**Superseded 2026-09-14** by the `budget-models-and-envs` work: the module
+is now parameterized across three HCP Terraform workspaces and no state
+file is committed. See
+[hcp-terraform-backend.md](hcp-terraform-backend.md). The paragraph above
+is retained as the "before" picture the change was measured against.
 
 ## Branching
 
@@ -69,7 +75,7 @@ Two consequences: the OIDC path has never been proven to work end to end
 unconditionally on every PR to `main` — it has no `paths-filter` gate, so a
 docs-only PR is gated on a dbt build that cannot pass.
 
-### OIDC is not actually configured — the code comment says otherwise
+### OIDC is configured, but with a subject that does not match
 
 Setting a repo-level `SNOWFLAKE_ACCOUNT` secret (`epgqqsk-kn46620`) on
 2026-09-14 got the job past the account error and to a second, deeper
@@ -83,19 +89,39 @@ Either the subject or issuer claims were not recognized, or the JWT's
 signature could not be verified.
 ```
 
-This **contradicts** the comment in `infra/service_user.tf`, which states
-that OIDC workload identity "is already configured on this user (used by
-the dbt workflows via the Snowflake CLI)" and puts
-`default_workload_identity` in `lifecycle.ignore_changes` on that basis.
-The workflows have never successfully used it. Recorded as a disagreement
-rather than reconciled — resolving it needs a `DESC USER
-GITHUB_ACTIONS_SERVICE_USER` against the account, which requires the
-Snowflake CLI (not yet installed locally).
+`DESC USER GITHUB_ACTIONS_SERVICE_USER` on 2026-09-14 settled which of two
+candidate causes it is:
 
-Two candidate causes, indistinguishable without that query: the workload
-identity was never set at all, or it was set with a subject that does not
-match the one GitHub is presenting (note the immutable-ID form and the
-`:environment:prod` suffix, both of which must match exactly).
+```
+HAS_WORKLOAD_IDENTITY   true
+```
+
+So workload identity **is** configured, and the comment in
+`infra/service_user.tf` asserting as much is correct — the failure is a
+**subject mismatch**, not an absence. The part of that comment that is
+wrong is the parenthetical "(used by the dbt workflows via the Snowflake
+CLI)": no workflow run has ever authenticated successfully, so the
+configuration has never actually been exercised.
+
+**Snowflake does not expose the registered subject.** `DESC USER` reports
+only the boolean; there is no `SHOW WORKLOAD IDENTITIES`, and
+`SNOWFLAKE.ACCOUNT_USAGE.USERS` carries the same boolean and nothing more.
+The value can be overwritten with `ALTER USER ... SET WORKLOAD_IDENTITY`
+but never read back. Diagnosing a mismatch therefore means re-setting the
+subject to a known value and retrying, not comparing the two.
+
+The likely mismatch is form: GitHub is presenting the immutable-ID variant
+(`repo:schall1992@104527486/budget-sdlc-demo@1357515027:environment:prod`),
+while a subject registered by hand would almost certainly have used the
+human-readable `repo:schall1992/budget-sdlc-demo:environment:prod`. Not
+confirmed, and not worth confirming — see below.
+
+**Not being fixed.** The approved `budget-models-and-envs` design retires
+OIDC entirely in favour of per-environment key-pair service users
+(`PRE_PROD_DBT_USER`, `PROD_DBT_USER`), matching what the Terraform jobs
+already do. Repairing the subject would be work on a mechanism scheduled
+for deletion. When OIDC goes, `default_workload_identity` should come out
+of `lifecycle.ignore_changes` along with the comment.
 
 `pr_merged.yml` applies to production with no review step after the merge.
 This is why `infra/**` and `.github/workflows/**` are `elevated` class in

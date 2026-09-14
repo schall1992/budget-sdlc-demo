@@ -6,7 +6,8 @@ would otherwise have to rediscover.
 - [snowflake-account-baseline.md](snowflake-account-baseline.md) — project
   infrastructure now exists: ANALYSIS_WH, PRE_PROD_DB (bronze/silver/gold),
   PROD_DB (bronze/silver/gold), all Terraform-managed. Source data in
-  SOURCE_DB.RAW.TRANSACTIONS.
+  SOURCE_DB.RAW.TRANSACTIONS. Also: why neither `connections.toml` profile
+  works for the Terraform provider, and the key pair added for it.
 - [dbt-scaffold-drift.md](dbt-scaffold-drift.md) — template placeholders
   and stale tasty-bytes references. The raw-data-location contradiction is
   resolved (no raw schema; SOURCE_DB is authoritative).

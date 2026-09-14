@@ -28,6 +28,32 @@ after `init-snowflake-objects` terraform apply.
 
 All findings below come from `sam_test`.
 
+### The Terraform provider cannot use either connection
+
+`sam_test` authenticates with `OAUTH_AUTHORIZATION_CODE`, which the
+Snowflake Terraform provider does not implement, and `externalbrowser`
+fails on this account (`390190`: SAML IdP account parameter). The provider
+also cannot read `connections.toml` at all — its TOML schema admits only
+profile tables, so the top-level `default_connection_name` key makes the
+whole file fail to decode.
+
+So on 2026-09-14 `SHALL` was given an RSA key pair for Terraform's use:
+private key at `~/.snowflake/keys/shall_terraform.p8` (mode 600, never in
+the repo), public half registered with `ALTER USER SHALL SET
+RSA_PUBLIC_KEY`. This grants no new privilege — `SHALL` already holds
+`ACCOUNTADMIN` — it only adds an auth method the provider supports, and
+leaves the MFA/OAuth login untouched. Local runs use the same four
+environment variables CI does, plus the key:
+
+```
+SNOWFLAKE_ORGANIZATION_NAME=epgqqsk SNOWFLAKE_ACCOUNT_NAME=kn46620 \
+SNOWFLAKE_USER=SHALL SNOWFLAKE_AUTHENTICATOR=SNOWFLAKE_JWT \
+SNOWFLAKE_PRIVATE_KEY="$(cat ~/.snowflake/keys/shall_terraform.p8)"
+```
+
+This credential is deliberately **not** in Terraform state: it is the
+credential Terraform authenticates with, so managing it would be circular.
+
 ## What exists
 
 **Source data:** `SOURCE_DB.RAW.TRANSACTIONS` — 1,738 rows, 8 columns, all

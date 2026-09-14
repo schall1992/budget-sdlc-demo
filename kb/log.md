@@ -6,6 +6,14 @@ process itself.
 
 ## 2026-09-14
 
+- Updated `observations/snowflake-account-baseline.md` — added why the
+  Terraform provider can use neither `connections.toml` profile
+  (`OAUTH_AUTHORIZATION_CODE` unsupported, `externalbrowser` rejected by
+  the account, and the file's top-level key breaks the provider's TOML
+  decoder) and the RSA key pair added to `SHALL` to work around it.
+- Updated `observations/repo-and-cicd-baseline.md` — corrected the
+  Terraform resource count (ten, not nine) and marked the whole Terraform
+  section superseded by the HCP/parameterized-module refactor.
 - Added `observations/hcp-terraform-backend.md` — HCP Terraform org
   `osusam28-main` and the three `local`-execution workspaces
   (`budget-shared`, `budget-pre-prod`, `budget-prod`) tagged `budget`,
