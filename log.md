@@ -3,6 +3,25 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-15 — dev-promotion shipped
+
+- **Transition:** `PR_OPEN → SHIPPED` for `dev-promotion` (echoed locally by
+  the spec/plan move to `docs/prod/`).
+- **Class:** `elevated`.
+- **Prompt:** confirmed T1–T6's evidence; proceed to ship.
+- **Response:** T7 — moved spec and plan to `docs/prod/`. Shipped under the
+  *current* two-PR model, since the new model wasn't live until this merge:
+  PR #13 (`dev-promotion → dev`, docs-move only) merged clean; PR #14
+  (`dev → main`) — the first real promotion under the new model — correctly
+  reported `Terraform plan (shared, prod)` as `skipped` (no `infra/**`
+  touched), leaving only the review gate, then merged. `main_merged.yml`
+  fired normally on the push to `main`. From here on, `main` only changes via
+  a `dev → main` PR gated by that plan check; the old per-feature PR into
+  `main` and the force-push `dev` reset are both retired.
+- **Files touched:** moved `docs/dev-promotion-spec.md`,
+  `docs/dev-promotion-plan.md` → `docs/prod/`; edited
+  `docs/prod/dev-promotion-plan.md`, `log.md`.
+
 ## 2026-09-15 — Build: T3, T4, T5, T6 done
 
 - **Transition:** `BUILD_IN_PROGRESS → BUILD_IN_PROGRESS` for `dev-promotion`

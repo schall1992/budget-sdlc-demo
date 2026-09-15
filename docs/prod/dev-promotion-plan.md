@@ -138,7 +138,10 @@ shipping PR — that's the correct outcome, not a gap.
 - Tests: PR checks green, both merges complete, spec/plan live in
   `docs/prod/`.
 - `depends on: T5, T6`
-- **In progress.** Spec and plan moved to `docs/prod/`. Feature PR into `dev`
-  was already opened and merged as part of T5's live verification (#11) —
-  its content is this whole change, so it doubles as this stage's `dev` PR.
-  Opening the `dev → main` promotion PR next.
+- **Done.** Spec and plan moved to `docs/prod/`. `dev` PR: #11 (T5's
+  verification PR) plus #13 (the docs-move commit) — both merged clean under
+  `dev`'s new protection. `main` PR: #14, `dev → main`, the first real
+  promotion under the new model — `Terraform plan (shared, prod)` reported
+  `skipped` (no `infra/**` touched, exactly as predicted), leaving only the
+  review requirement, then merged. `main_merged.yml` fired normally on the
+  push to `main`, unchanged. Shipped.
