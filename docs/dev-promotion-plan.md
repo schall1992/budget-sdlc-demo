@@ -77,6 +77,9 @@ existing 1-approving-review requirement, no force-push, no deletion.
   check by name, plus the unchanged review/force-push/deletion settings.
 - `depends on: T2` (a required check needs run history to be selectable, and
   this shouldn't gate on an unproven job)
+- **Done.** `gh api .../branches/main/protection` shows `Terraform plan
+  (shared, prod)` as a required check, review count 1, force-push/deletion
+  still blocked.
 
 **T4 — Protect `dev`.** Add branch protection for the first time: 1
 approving review, required `dbt-build` and `terraform-plan` checks from the
@@ -84,6 +87,11 @@ existing `pr_to_dev.yml`, no force-push, no deletion.
 - Tests: `gh api repos/.../branches/dev/protection` reflects these settings;
   a direct `git push --force` to `dev` is rejected.
 - `independent` (these checks already have run history from existing traffic)
+- **Done.** `gh api .../branches/dev/protection` shows both checks required,
+  review count 1, force-push/deletion blocked. Verified the force-push block
+  live: `git push --force origin dev` was rejected outright (even under
+  admin bypass, unlike the review/status-check rules, which admin bypasses
+  but reports as "Bypassed rule violations").
 
 **T5 — Verify end to end against the spec's test plan.** With T3 and T4 live:
 a `dev → main` PR with no `infra/**` diff merges cleanly (plan check
@@ -94,6 +102,15 @@ passes under `dev`'s new protection; the merge button offers no squash
 option anywhere in the repo (already repo-wide, but confirmed here too).
 - Tests: all of the above, observed directly rather than asserted.
 - `depends on: T3, T4`
+- **Done.** PR #11 (`dev-promotion` → `dev`): both required checks passed
+  under `dev`'s new protection (plan skipped, dbt-build passed), merge
+  triggered `dev_merged.yml` unchanged. PR #12 (throwaway, `→ main`, an
+  intentionally invalid `shared.tfvars`): required check failed, PR reported
+  `BLOCKED`; reverting the bad edit turned the check to skipped/passing,
+  leaving only the review requirement outstanding — confirms the plan gate
+  itself is what was blocking. Closed without merging, branch deleted.
+  Squash-merge-off confirmed repo-wide via `gh repo view`
+  (`squashMergeAllowed: false`).
 
 **T6 — Fix the `README.md` drift.** Replace the stale `pr_merged.yml`
 description (superseded by `main_merged.yml`) and its commit-state-back
@@ -102,6 +119,14 @@ claim (superseded by the HCP remote-state move) with accurate text, and add
 - Tests: `README.md` no longer names `pr_merged.yml` or describes committing
   state back; `pr_to_main.yml` is listed and described accurately.
 - `independent`
+- **Done.** Replaced the CI/CD list with all five current workflows
+  (`pr_to_dev.yml`, `dev_merged.yml`, `pr_to_main.yml`, `main_merged.yml`,
+  `pr_closed.yml`) and fixed the Infrastructure section's stale
+  "state committed to the repo" claim (state lives in HCP Terraform).
+  `dbt/setup/`'s "slated for deletion" section is separately stale (those
+  files were deleted in `budget-models-and-envs`/T13) but is unrelated
+  pre-existing drift outside this task's named scope — flagged, not fixed
+  here.
 
 **T7 — Ship.** This change itself ships under the *current* (pre-this-spec)
 two-PR model, since the new model isn't live until it merges: PR into `dev`,

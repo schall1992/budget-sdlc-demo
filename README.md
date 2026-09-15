@@ -63,15 +63,19 @@ driving that work.
 ### Infrastructure (`infra/`)
 
 Terraform (Snowflake provider) defining the warehouse, databases, schemas, and
-the CI service user. State is committed to the repo and written back by CI.
+the CI service user. State lives in HCP Terraform, one workspace per
+deployment target — not committed to the repo.
 
 ### CI/CD (`.github/workflows/`)
 
-- **`incoming_pr.yml`** — on PR to `main`: `terraform plan` (path-filtered on `infra/**`), plus a dbt deploy/build job.
-- **`pr_merged.yml`** — on push to `main`: `terraform apply -auto-approve`, then commits updated state back to the branch.
+- **`pr_to_dev.yml`** — on PR to `dev`: `terraform plan` across all three workspaces (path-filtered on `infra/**`), plus a dbt build into a per-PR schema.
+- **`dev_merged.yml`** — on push to `dev`: `terraform apply` for `pre_prod`, plus a dbt build/deploy into `PRE_PROD_DB`.
+- **`pr_to_main.yml`** — on PR to `main` (a `dev` → `main` promotion): `terraform plan` for `shared` and `prod` only (path-filtered on `infra/**`) — a required check on `main`. No dbt job: `dev_merged.yml` has already built and tested everything being promoted.
+- **`main_merged.yml`** — on push to `main`: `terraform apply` for `shared` and `prod`, plus a dbt build/deploy into `PROD_DB`.
+- **`pr_closed.yml`** — on PR close against `dev`: drops that PR's per-PR schemas.
 
 Terraform jobs authenticate with an RSA key pair (`SNOWFLAKE_JWT`); the dbt
-jobs use OIDC.
+jobs use key-pair auth as well.
 
 ### Scheduling (`dbt/schedules.sql`)
 

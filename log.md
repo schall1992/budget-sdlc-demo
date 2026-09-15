@@ -3,6 +3,36 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-15 — Build: T3, T4, T5, T6 done
+
+- **Transition:** `BUILD_IN_PROGRESS → BUILD_IN_PROGRESS` for `dev-promotion`
+  (T1–T6 of 7 done; only T7, shipping, remains).
+- **Class:** `elevated`.
+- **Prompt:** continue the build.
+- **Response:** T3 — added `Terraform plan (shared, prod)` as a required
+  status check on `main` via `gh api`, keeping review/force-push/deletion
+  settings unchanged. T4 — protected `dev` for the first time: 1 review,
+  required `dbt-build`/`terraform-plan` checks, no force-push/deletion.
+  Verified force-push is rejected outright, even under admin bypass (unlike
+  the review/status-check rules, which admin can bypass). T5 — opened PR #11
+  (`dev-promotion` → `dev`) to prove a normal feature PR still passes under
+  `dev`'s new protection (it did — plan skipped, dbt-build passed — and
+  merged, triggering `dev_merged.yml` unchanged); it had a real merge
+  conflict in `log.md` against `dev`'s later history, resolved by keeping
+  both sets of entries. Opened throwaway PR #12 (`→ main`, deliberately
+  invalid `shared.tfvars`) to prove the new required check blocks a bad
+  promotion — it did, PR reported `BLOCKED` with a failed check — then
+  reverted the bad edit to confirm the check clears to skipped/passing.
+  Closed #12 without merging. Confirmed squash-merge-off holds repo-wide via
+  `gh repo view`. T6 — replaced the README's stale two-workflow CI/CD list
+  (naming retired `incoming_pr.yml`/`pr_merged.yml` and a "state committed to
+  the repo" claim) with the current five workflows and the HCP-remote-state
+  fact. Noticed `dbt/setup/`'s README section is separately stale (describes
+  files deleted in `budget-models-and-envs`) — flagged to the user, not fixed
+  here, since it wasn't part of this task's scoped drift.
+- **Files touched:** `docs/dev-promotion-plan.md` (T3–T6 marked done),
+  `README.md` (T6), `log.md`.
+
 ## 2026-09-15 — Build: T1 and T2 done
 
 - **Transition:** `BUILD_IN_PROGRESS → BUILD_IN_PROGRESS` for `dev-promotion`
