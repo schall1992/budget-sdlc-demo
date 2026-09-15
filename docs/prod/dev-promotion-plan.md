@@ -138,3 +138,7 @@ shipping PR — that's the correct outcome, not a gap.
 - Tests: PR checks green, both merges complete, spec/plan live in
   `docs/prod/`.
 - `depends on: T5, T6`
+- **In progress.** Spec and plan moved to `docs/prod/`. Feature PR into `dev`
+  was already opened and merged as part of T5's live verification (#11) —
+  its content is this whole change, so it doubles as this stage's `dev` PR.
+  Opening the `dev → main` promotion PR next.
