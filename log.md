@@ -3,6 +3,40 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-14 — budget-models-and-envs closed out
+
+- **Transition:** PR_OPEN → SHIPPED (echoed locally)
+- **Class:** elevated
+- **Prompt:** Accept the grant-enumeration evidence for T16 rather than
+  building a fifth workflow to run the literal prod→pre_prod attempt.
+- **Response:** Accepted. T16 marked done with a note recording that the
+  second direction was proven by enumeration and why — `PROD_DBT_USER`'s key
+  is CI-only by design, which is the property being relied on, so it cannot
+  be exercised from a laptop. T3–T16 marked done, plan frontmatter moved off
+  `breakdown_draft`, and both spec and plan moved into `docs/prod/` per
+  `sdlc/states.md`.
+- **Files touched:** edited then moved `docs/budget-models-and-envs-plan.md`
+  → `docs/prod/`; moved `docs/budget-models-and-envs-spec.md` → `docs/prod/`.
+
+## 2026-09-14 — Shipped; item 10 passes, T16 half literal half enumerated
+
+- **Transition:** `PR_OPEN → SHIPPED` for `budget-models-and-envs` — PR #6
+  merged, prod applied. T16 is the only task still open.
+- **Class:** `elevated` (provisional).
+- **Prompt:** merged.
+- **Response:** `main_merged` applied shared as a no-op and prod as 13 added,
+  matching the previewed plan exactly, then built `PROD_DB.BRONZE`. Item 10
+  verified in Snowflake: 1,738 rows, no negatives. For T16, the
+  pre_prod-to-prod direction was tested literally and denied; the
+  prod-to-pre_prod direction cannot be, because `PROD_DBT_USER`'s key is
+  CI-only by design. Enumerated its grants instead, which is the stronger
+  evidence given the denial message is ambiguous: `PROD_DBT_ROLE` holds
+  nothing on `PRE_PROD_DB`, `PRE_PROD_DBT_ROLE` nothing on `PROD_DB`. Also
+  closed the two back doors a naive test would miss — `PUBLIC` holds no grant
+  on either database, and neither role inherits any role. Put the remaining
+  choice to the user rather than declaring T16 done unilaterally.
+- **Files touched:** edited `log.md`.
+
 ## 2026-09-14 — Item 9 passes; ship PR open, prod apply awaiting review
 
 - **Transition:** `PR_OPEN` for `budget-models-and-envs`, PR #6 against
