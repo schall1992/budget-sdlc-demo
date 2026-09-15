@@ -56,6 +56,7 @@ environment, same credential shape as `pr_to_dev.yml`'s plan job.
 - Tests: `actionlint` clean; triggers only on `pull_request` → `main`; job
   plans exactly `shared` and `prod` (not `pre_prod`).
 - `independent`
+- **Done.** `actionlint` reported clean.
 
 **T2 — Prove the workflow on a throwaway PR.** Open a no-op PR into `main`
 and confirm the job appears and reports correctly: skipped when the PR
@@ -65,6 +66,9 @@ touching an `infra/` file, reverted after).
   reports `skipped` on the no-op PR, a real plan result on the infra-touching
   one.
 - `depends on: T1`
+- **Done.** PR #10: `terraform-plan` reported skipped with no `infra/**`
+  diff, then a real plan (zero-diff on both `shared` and `prod`) after a
+  throwaway `infra/versions.tf` comment. PR closed unmerged, branch deleted.
 
 **T3 — Protect `main`.** Add the "PR to main" `terraform-plan` job as a
 required status check via `gh api`/branch protection settings. Keep the
