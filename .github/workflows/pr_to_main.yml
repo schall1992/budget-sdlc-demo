@@ -1,0 +1,66 @@
+# The preview for what a dev->main promotion is about to apply. Only shared
+# and prod are planned here: pre_prod already applied on the dev merges that
+# led up to this promotion, so there's nothing new to preview for it.
+name: PR to main
+run-name: PR #${{ github.event.pull_request.number }} to main by ${{ github.actor }}
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            infra:
+              - 'infra/**'
+
+  terraform-plan:
+    name: Terraform plan (shared, prod)
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    environment: infra
+    env:
+      SNOWFLAKE_ORGANIZATION_NAME: epgqqsk
+      SNOWFLAKE_ACCOUNT_NAME: kn46620
+      SNOWFLAKE_USER: GITHUB_ACTIONS_SERVICE_USER
+      SNOWFLAKE_AUTHENTICATOR: SNOWFLAKE_JWT
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_RAW }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.16"
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform init
+        working-directory: infra
+        env:
+          TF_WORKSPACE: budget-shared
+        run: terraform init -input=false
+
+      - name: Plan shared
+        working-directory: infra
+        env:
+          TF_WORKSPACE: budget-shared
+        run: terraform plan -input=false -no-color -var-file=envs/shared.tfvars
+
+      - name: Plan prod
+        working-directory: infra
+        env:
+          TF_WORKSPACE: budget-prod
+        run: terraform plan -input=false -no-color -var-file=envs/prod.tfvars
