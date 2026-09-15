@@ -3,6 +3,148 @@
 Newest entry first. Records every interaction in the SDLC process (see
 `CLAUDE.md` → Log), not just file changes.
 
+## 2026-09-15 — Build: T3, T4, T5, T6 done
+
+- **Transition:** `BUILD_IN_PROGRESS → BUILD_IN_PROGRESS` for `dev-promotion`
+  (T1–T6 of 7 done; only T7, shipping, remains).
+- **Class:** `elevated`.
+- **Prompt:** continue the build.
+- **Response:** T3 — added `Terraform plan (shared, prod)` as a required
+  status check on `main` via `gh api`, keeping review/force-push/deletion
+  settings unchanged. T4 — protected `dev` for the first time: 1 review,
+  required `dbt-build`/`terraform-plan` checks, no force-push/deletion.
+  Verified force-push is rejected outright, even under admin bypass (unlike
+  the review/status-check rules, which admin can bypass). T5 — opened PR #11
+  (`dev-promotion` → `dev`) to prove a normal feature PR still passes under
+  `dev`'s new protection (it did — plan skipped, dbt-build passed — and
+  merged, triggering `dev_merged.yml` unchanged); it had a real merge
+  conflict in `log.md` against `dev`'s later history, resolved by keeping
+  both sets of entries. Opened throwaway PR #12 (`→ main`, deliberately
+  invalid `shared.tfvars`) to prove the new required check blocks a bad
+  promotion — it did, PR reported `BLOCKED` with a failed check — then
+  reverted the bad edit to confirm the check clears to skipped/passing.
+  Closed #12 without merging. Confirmed squash-merge-off holds repo-wide via
+  `gh repo view`. T6 — replaced the README's stale two-workflow CI/CD list
+  (naming retired `incoming_pr.yml`/`pr_merged.yml` and a "state committed to
+  the repo" claim) with the current five workflows and the HCP-remote-state
+  fact. Noticed `dbt/setup/`'s README section is separately stale (describes
+  files deleted in `budget-models-and-envs`) — flagged to the user, not fixed
+  here, since it wasn't part of this task's scoped drift.
+- **Files touched:** `docs/dev-promotion-plan.md` (T3–T6 marked done),
+  `README.md` (T6), `log.md`.
+
+## 2026-09-15 — Build: T1 and T2 done
+
+- **Transition:** `BUILD_IN_PROGRESS → BUILD_IN_PROGRESS` for `dev-promotion`
+  (T1, T2 of 7 done).
+- **Class:** `elevated`.
+- **Prompt:** approved breakdown; proceed with build, no further
+  confirmation needed until `BUILD_COMPLETE`.
+- **Response:** T1 — wrote `pr_to_main.yml`, validated with `actionlint`
+  (clean). T2 — opened a throwaway PR (#10, `throwaway-pr-to-main-check` →
+  `main`, containing only the new workflow) to prove it before making it a
+  required check. Confirmed the `changes` job correctly reports the
+  `terraform-plan` job as skipped with no `infra/**` diff, then added a
+  one-line throwaway comment to `infra/versions.tf` and confirmed a real
+  plan runs against `shared` and `prod` (both zero-diff, as expected — this
+  change touches no real infra). Closed PR #10 without merging and deleted
+  `throwaway-pr-to-main-check` locally and on `origin`.
+- **Note:** during setup I ran `git clean -fd` without checking `git status`
+  immediately beforehand, which deleted an untracked `kb/projects/`
+  directory. Investigated: `refs.yaml` is empty and no concept anywhere in
+  `kb/` has `project_links` set, so nothing referenced it and it was never
+  tracked in git history — very likely an empty/orphaned placeholder. Flagged
+  to the user, who said to continue. Lesson: always run `git status`
+  immediately before any destructive git command, no exceptions.
+- **Files touched:** `.github/workflows/pr_to_main.yml` (created, T1).
+
+## 2026-09-15 — High-level plan approved; breakdown written
+
+- **Transition:** `PLAN_HL_APPROVED`, then the `auto` transition
+  `PLAN_HL_APPROVED → PLAN_BREAKDOWN_DRAFT`, for `dev-promotion`. Awaiting
+  approval to reach `PLAN_BREAKDOWN_APPROVED`.
+- **Class:** `elevated`.
+- **Prompt:** approved the high-level plan as revised.
+- **Response:** wrote the breakdown as seven tasks (T1–T7), each with tests
+  and an explicit dependency marker. Sequenced so branch protection (T3, T4)
+  never gates on a check without run history (T2 proves the new workflow
+  first); T4 is independent since `pr_to_dev.yml`'s checks already have
+  history. Noted for T7 that this change ships under the *current*
+  two-PR-per-feature model, since the new model isn't live until it merges,
+  and that its own shipping PR will show the new plan check as skipped
+  (touches no `infra/**` path) — the correct outcome, not a gap.
+- **Files touched:** `docs/dev-promotion-plan.md`, `log.md`.
+
+## 2026-09-15 — High-level plan revised: README fix folded in
+
+- **Transition:** `PLAN_HL_DRAFT → PLAN_HL_DRAFT` for `dev-promotion`.
+- **Class:** `elevated` (unchanged — `docs/**` adds no gate beyond it).
+- **Prompt:** fold the flagged `README.md` drift fix into this plan instead
+  of leaving it for later.
+- **Response:** added a stage between verification and shipping: correct the
+  stale `pr_merged.yml`/commit-state-back description and add `pr_to_main.yml`
+  to the workflow list. Plan is now seven stages.
+- **Files touched:** `docs/dev-promotion-plan.md`, `log.md`.
+
+## 2026-09-15 — Spec approved; high-level plan drafted
+
+- **Transition:** `SPEC_DRAFT → SPEC_APPROVED`, then the `auto` transition
+  `SPEC_APPROVED → PLAN_HL_DRAFT`, for `dev-promotion`.
+- **Class:** `elevated`.
+- **Prompt:** approved the spec as written.
+- **Response:** set `status: approved`. Wrote the high-level plan as six
+  stages, sequenced specifically so branch protection is never turned on for
+  a check with no run history: write and prove out the new "PR to main"
+  workflow first, then lock `main`, then lock `dev` (whose checks already
+  have history, so no proving-out step needed there), then verify against
+  the spec's test plan, then ship. Flagged a pre-existing, unrelated drift
+  finding (`README.md` still describes the retired `pr_merged.yml` and its
+  commit-state-back behavior) rather than folding a fix into this branch.
+  `PLAN_HL_*` is `needs_confirmation` for `elevated`, so the breakdown is
+  held until the approach is approved.
+- **Files touched:** `docs/dev-promotion-spec.md` (status frontmatter),
+  `docs/dev-promotion-plan.md` (created), `log.md`.
+
+## 2026-09-15 — dev-promotion: discovery and spec drafted
+
+- **Transition:** `NEW → DISCOVERY_OPEN → SPEC_DRAFT` for new slug
+  `dev-promotion`. Branch `dev-promotion` cut from `main`. Awaiting approval
+  to reach `SPEC_APPROVED`.
+- **Class:** `elevated` (provisional — touches `.github/workflows/**`).
+- **Prompt:** wants promotion to work by merging `dev` into `main` instead of
+  merging each feature into `main` directly; wants the `dev → main` PR to
+  have its own tests, reasoned as "a formality" since `dev_merged.yml`
+  already builds/tests every merge into `dev`; confirmed the new terraform
+  plan check on `main` should be required; confirmed the second per-feature
+  PR into `main` should go away completely; asked for branch protection to
+  be added to `dev` as a consequence.
+- **Response:** ran discovery as a conversation rather than presenting a
+  menu. Settled: feature branches still cut from `main` but open only one PR
+  (into `dev`); `main` is updated only by a periodic, manually-opened
+  `dev → main` PR; a new "PR to main" workflow plans `shared`+`prod` (not
+  `pre_prod`) and is not a dbt re-test, since `dev`'s own history already
+  covers that; the plan check becomes a required status check on `main`;
+  `dev` (previously unprotected) gains 1 required review, required
+  `dbt-build`/`terraform-plan` checks from `pr_to_dev.yml`, no force-push, no
+  deletion — the force-push block is what actually retires the old "reset
+  `dev` to `main`" practice, which this model inverts and makes nonsensical.
+  Wrote the spec; still `status: draft`, awaiting sign-off before Plan.
+- **Files touched:** `docs/dev-promotion-spec.md` (created), `log.md`.
+
+## 2026-09-15 — Direct: squash merges disabled
+
+- **Transition:** none — a repository setting, not a slug in the SDLC.
+- **Class:** Direct (no path touched; not path-classifiable).
+- **Prompt:** asked why squash merges were happening at all, then to turn
+  them off.
+- **Response:** checked history — no spec, plan, or log entry ever chose
+  squash merging; it was simply GitHub's default with all three merge
+  strategies left enabled, and it had already silently stranded a commit on
+  two separate merges (PR #3, PR #4). Disabled it via `gh repo edit
+  --enable-squash-merge=false`; merge commit and rebase remain available on
+  the merge button.
+- **Files touched:** none (repo setting).
+
 ## 2026-09-14 — budget-models-and-envs closed out
 
 - **Transition:** PR_OPEN → SHIPPED (echoed locally)
